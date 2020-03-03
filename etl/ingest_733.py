@@ -257,14 +257,16 @@ def create_tags_collection(db):
 
 def main():
     import glob
+    from dotenv import load_dotenv
+    load_dotenv(verbose=True)
     # from suitcase.msgpack import export
     from suitcase.jsonl import export
     from suitcase.mongo_embedded import Serializer
-    input_root = '/mnt/lovelace/beamlines'
-    output_root = '/mnt/lovelace/beamlines/733/tagcam2'
+    input_root = os.getenv('input_root')
+    output_root = os.getenv('output_root')
     # output_root = '/tmp/beamlines/733/tagcam2'
-    msg_pack_dir = '/tmp/beamlines/733/tagcam2'
-    paths = glob.glob('/mnt/lovelace/beamlines/733/ChanE/2017_11_3_WAXS/*.edf')
+    msg_pack_dir = os.getenv('msg_pack_dir')
+    paths = glob.glob(os.getenv('input_relative'))
     logger.info(paths)
     etl_executor = ETLExecutor(input_root, output_root)
     for file_path in paths:
