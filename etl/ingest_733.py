@@ -33,7 +33,7 @@ def map_spec_from_file_ext(file_type):
 
 class ETLExecutor():
 
-    def __init__(self, input_root, output_root):
+    def __init__(self, input_root, output_root, tagging_callback=None):
         """init
         Parameters
         ----------
@@ -44,8 +44,9 @@ class ETLExecutor():
         """
         self.input_root = input_root
         self.output_root = output_root
-
-    def execute(self, path, formats=None):
+        self.tagging_callback = tagging_callback
+        
+    def execute(self, path, formats=list()):
         """Function for processing a number
         of files in a directory to get them ready
         for ML processing. 
@@ -94,10 +95,10 @@ class ETLExecutor():
         TypeError
             raised if a conversion format is not supported
         """
-
-        for _, file_type in formats:
-            if file_type not in ['tif', 'tiff', 'jpeg', 'jpg']:
-                raise TypeError(f'type not supported: {file_type}')
+        if formats:
+            for _, file_type in formats:
+                if file_type not in ['tif', 'tiff', 'jpeg', 'jpg']:
+                    raise TypeError(f'type not supported: {file_type}')
         relative_path = os.path.relpath(path, self.input_root)
         relative_path_hash = self._hash_string(os.path.dirname(relative_path))
         file_payload_hash = self._hash_file(path)
@@ -124,7 +125,11 @@ class ETLExecutor():
                                        raw_file_name,
                                        dest_folder,
                                        *format))
-        return raw_metadata, thumbnail_metadatas
+        tags_dict = None
+        if self.tagging_callback:
+            tags_dict = self.tagging_callback(path)
+
+        return raw_metadata, thumbnail_metadatas, tags_dict
 
     def _convert_raw(self, raw_img, raw_file_name, processed_path_root, size, file_type):
         log_image = np.array(raw_img.data)

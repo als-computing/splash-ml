@@ -1,0 +1,11 @@
+jupyter
+ipython
+databroker==1.0.0b8
+bluesky
+fabio
+event_model
+Pillow
+scikit-image
+imageio
+suitcase-jsonl
+python-dotenv
