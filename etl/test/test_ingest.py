@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import pytest
 import shutil
-from ..ingest_733 import ETLExecutor
+from ..ingest import ETLExecutor
 
 @pytest.fixture
 def tmp_image_file(src_root):
