@@ -260,6 +260,28 @@ def create_tags_collection(db):
     tags_collection = db['tags']
     # tags_collection.create_index([])
 
+
+def tagging_callback(path):
+    import fnmatch
+    scattering_geometry = None
+    sample_detector_distance_name = None
+    metadata = dict()
+    #get sample_detector_distance
+    if fnmatch.fnmatch(path.lower(), '*saxs*'):
+        sample_detector_distance_name = 'SAXS'
+    elif fnmatch.fnmatch(path.lower(), '*waxs*'):
+        sample_detector_distance_name = 'WAXS'
+
+    if sample_detector_distance_name:
+        #get scattering_geometry
+        if fnmatch.fnmatch(path.lower(), '*gisaxs*') or fnmatch.fnmatch(path.lower(), '*giwaxs*') :
+            scattering_geometry = 'reflection' 
+        else:
+            scattering_geometry = 'transmission'
+        metadata['scattering_geometry'] = scattering_geometry
+        metadata['sample_detector_distance_name'] = sample_detector_distance_name
+    return metadata
+
 def main():
     import glob
     from dotenv import load_dotenv
@@ -271,12 +293,13 @@ def main():
     output_root = os.getenv('output_root')
     # output_root = '/tmp/beamlines/733/tagcam2'
     msg_pack_dir = os.getenv('msg_pack_dir')
-    paths = glob.glob(os.getenv('input_relative'))
+    # paths = glob.glob(os.path.join(input_root, os.getenv('input_relative')))
+    paths = glob.glob('/mnt/lovelace/beamlines/733/ChanE/2017_11_3_WAXS/*.edf')
     logger.info(paths)
-    etl_executor = ETLExecutor(input_root, output_root)
+    etl_executor = ETLExecutor(input_root, output_root, tagging_callback)
     for file_path in paths:
         try:
-            raw_metdata, thumb_metadatas = etl_executor.execute(
+            raw_metdata, thumb_metadatas, return_tags = etl_executor.execute(
                                                 file_path, [(256, 'jpg'), (256, 'tiff')])
         except TypeError as e:
             logger.error(e)
@@ -290,7 +313,6 @@ def main():
             # with Serializer(directory, file_prefix, cls=cls, **kwargs) as serializer:
             #     for item in gen:
             #         serializer(*item)
-
-    return serializer.artifacts
+  
 if __name__ == '__main__':
     main()
