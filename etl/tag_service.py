@@ -20,8 +20,7 @@ class TaggableImage(Document):
 
 
 class TagService():
-    def __init__(self, db=None):
-        self.db = db
+    def __init__(self):
 
     def create_image(self, image_uid, image_relative_path, tags_dict):
         # tag_objects = []
@@ -35,3 +34,7 @@ class TagService():
         for k, v in tags_dict.items():
             image.tags.append(Tag(key=k, value=v))
         image.save()
+    
+    def get_image(hash):
+        images = TaggableImage(uid=hash)
+        

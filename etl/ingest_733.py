@@ -1,7 +1,9 @@
-import ingest
+from etl import ingest
 import os
 import logging
 from mongoengine import connect
+import pytest
+
 logger = logging.getLogger('ingest_733')
 
 def ingest_733(raw_metadata, output_root, thumbnail_medadatas=None):
@@ -12,6 +14,7 @@ def tagging_callback(path):
     scattering_geometry = None
     sample_detector_distance_name = None
     metadata = dict()
+
     #get sample_detector_distance
     if fnmatch.fnmatch(path.lower(), '*saxs*'):
         sample_detector_distance_name = 'SAXS'
