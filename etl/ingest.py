@@ -10,7 +10,7 @@ import imageio
 import shutil
 import hashlib
 from collections import namedtuple
-import pymongo
+# import pymongo
 
 # from xicam.core.msg import WARNING, notifyMessage, logError, logMessage
 # from xicam.plugins.datahandlerplugin import DataHandlerPlugin
@@ -19,12 +19,14 @@ import pymongo
 
 logger = logging.getLogger('ingest')
 
-FILE_SPEC_MAPPING ={'tiff': 'AD_TIFF', 'tif': 'AD_TIFF', 'jpg': 'JPEG', 'jpeg': 'JPEG', 'edf': 'EDF'}
+FILE_SPEC_MAPPING = {'tiff': 'TIFF', 'tif': 'TIFF', 'jpg': 'JPEG', 'jpeg': 'JPEG', 'edf': 'EDF'}
 ImageMetadata = namedtuple('ImageMetadata',
                            'hash path shape field_name file_ext')
 
+
 def map_spec_from_file_ext(file_type):
     return FILE_SPEC_MAPPING.get(file_type.lower())
+
 
 class ETLExecutor():
 
@@ -166,8 +168,8 @@ class ETLExecutor():
 
 
 def createDocument(raw_metadata: ImageMetadata,
-                    output_root, 
-                    thumbnail_metadatas: list = None):
+                   output_root,
+                   thumbnail_metadatas: list = None):
 
     timestamp = time.time()
     # start document
@@ -176,9 +178,9 @@ def createDocument(raw_metadata: ImageMetadata,
 
     # event descriptor document for raw
     source = 'ALS 733'  # TODO -- find embedded source info?
-    raw_data_keys = {'raw': {'source': source, 'dtype': 'number', 
+    raw_data_keys = {'raw': {'source': source, 'dtype': 'array', 'external': 'FILESTORE:', 'dtype': 'array',
                              'shape': [raw_metadata.shape[0], 
-                                         raw_metadata.shape[1]]}}
+                                       raw_metadata.shape[1]]}}
     raw_stream_name = 'primary'
     raw_stream_bundle = run_bundle.compose_descriptor(
         data_keys=raw_data_keys,
@@ -196,7 +198,7 @@ def createDocument(raw_metadata: ImageMetadata,
     # datum for EDF 
     datum = edf_resource.compose_datum(datum_kwargs={})
     yield 'datum', datum
-    
+
     # event for EDF
     yield 'event', raw_stream_bundle.compose_event(
         data={raw_metadata.field_name: datum['datum_id']},
@@ -207,16 +209,15 @@ def createDocument(raw_metadata: ImageMetadata,
 
     # iterate over all the thumbnails to create keys for each
     thumbnail_data_keys = {thumnbnail_metadata.field_name: 
-                       {'source': source, 'dtype': 'number', 'shape':
-                        [thumnbnail_metadata.shape[0],
-                         thumnbnail_metadata.shape[1]]} 
-                       for thumnbnail_metadata in thumbnail_metadatas} 
+                           {'source': source, 'external': 'FILESTORE:', 'dtype': 'array', 'shape':
+                            [thumnbnail_metadata.shape[0],
+                             thumnbnail_metadata.shape[1]]}
+                           for thumnbnail_metadata in thumbnail_metadatas} 
     thumbnail_stream_name = 'thumbnails'
     thumbnail_stream_bundle = run_bundle.compose_descriptor(
         data_keys=thumbnail_data_keys,
         name=thumbnail_stream_name)
     yield 'descriptor', thumbnail_stream_bundle.descriptor_doc
-
 
     thumbnail_data = {}
     thumbnail_timestamps = {}
@@ -229,8 +230,8 @@ def createDocument(raw_metadata: ImageMetadata,
             resource_path=os.path.relpath(thumbnail_metadata.path, output_root),
             resource_kwargs={})
         yield 'resource', thumbnail_resource.resource_doc
-        
-        #thumbnail datum
+
+        # thumbnail datum
         datum = thumbnail_resource.compose_datum(datum_kwargs={})
         yield 'datum', datum
 
@@ -244,12 +245,12 @@ def createDocument(raw_metadata: ImageMetadata,
 
     yield 'stop', run_bundle.compose_stop()
 
-def add_to_tag_db(db, image_metadata: ImageMetadata):
-    # http://learnmongodbthehardway.com/schema/metadata/
 
-    tag_doc = {"source_id": image_metadata.hash,
-               "image_suffix": image_metadata.field_name,
-               "tags": [{"key": "", "value": "", "confidence": 0.0}]}
+# def add_to_tag_db(db, image_metadata: ImageMetadata):
+#     # http://learnmongodbthehardway.com/schema/metadata/
+#     tag_doc = {"source_id": image_metadata.hash,
+#                "image_suffix": image_metadata.field_name,
+            #    "tags": [{"key": "", "value": "", "confidence": 0.0}]}
 
 def create_tags_collection(db):
     tags_collection = db['tags']
