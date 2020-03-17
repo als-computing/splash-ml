@@ -5,6 +5,7 @@ from mongoengine import connect
 import pytest
 import suitcase
 import pymongo
+import fnmatch
 
 logger = logging.getLogger('ingest_733')
 
@@ -13,41 +14,49 @@ def ingest_733(raw_metadata, output_root, thumbnail_medadatas=None):
 
 
 def tagging_callback(path):
-    import fnmatch
     scattering_geometry = None
     sample_detector_distance_name = None
     metadata = dict()
-
-    #get sample_detector_distance
-    if fnmatch.fnmatch(path.lower(), '*saxs*'):
-        sample_detector_distance_name = 'SAXS'
-    elif fnmatch.fnmatch(path.lower(), '*waxs*'):
-        sample_detector_distance_name = 'WAXS'
-
+    
+    # get sample_detector_distance_name
+    sample_detector_distance_name = ['saxs','waxs']
+    sample_detector_distance_name = get_tags(path, sample_detector_distance_name)
     if sample_detector_distance_name:
-        #get scattering_geometry
-        if fnmatch.fnmatch(path.lower(), '*gisaxs*') or fnmatch.fnmatch(path.lower(), '*giwaxs*') :
-            scattering_geometry = 'reflection' 
-        else:
-            scattering_geometry = 'transmission'
-        metadata['scattering_geometry'] = scattering_geometry
         metadata['sample_detector_distance_name'] = sample_detector_distance_name
-    return metadata
-    
-    #3/16/20 -- tags added by Eric and Alex
-    tag1 = None
-    if fnmatch.fnmatch(path.lower(), '*agb*'):
-        agb_tag = 'agb_tag_name'
-        metadata['agb_tag'] = agb_tag
-    
-    if fnmatch.fnmatch(path.lower(), '*auto*'):
-        auto_tag = 'auto_tag_name'
-        metadata['auto_tag'] = auto_tag
+        
+    # get scattering_geometry
+    scattering_geometry = ['gisaxs','giwaxs']
+    scattering_geometry = get_tags(path, scattering_geometry)
+    if scattering_geometry:
+        metadata['scattering_geometry'] = scattering_geometry
 
-    if fnmatch.fnmatch(path.lower(), '*beamstop*'):
-        beamstop_tag = 'beamstop_tag_name'
-        metadata['beamstop_tag'] = 'beamstop_tag'
+    # get beamline
+    beamline = ['beamstop','auto']
+    beamline = get_tags(path, beamline)
+    if beamline:
+        metadata['beamline'] = beamline
 
+    # get calibrant
+    calibrant = ['agb','lab6']
+    calibrant = get_tags(path, calibrant)
+    if calibrant:
+        metadata['calibrant'] = calibrant   
+    
+    return metadata  
+
+def get_tags(path, kwrds):
+    ## Takes as input the filepath and tuple of strings to search for in the path
+    ## Returns the string found. In none found, None is returned.
+    strOut = []
+    for x in kwrds:
+        newStr = '*' + x + '*'
+        if fnmatch.fnmatch(path.lower(), newStr):
+            strOut.append(x)
+    if strOut:
+        return strOut
+    else:
+        return None
+    
 def main():
     import glob
     from dotenv import load_dotenv
