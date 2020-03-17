@@ -33,6 +33,20 @@ def tagging_callback(path):
         metadata['scattering_geometry'] = scattering_geometry
         metadata['sample_detector_distance_name'] = sample_detector_distance_name
     return metadata
+    
+    #3/16/20 -- tags added by Eric and Alex
+    tag1 = None
+    if fnmatch.fnmatch(path.lower(), '*agb*'):
+        agb_tag = 'agb_tag_name'
+        metadata['agb_tag'] = agb_tag
+    
+    if fnmatch.fnmatch(path.lower(), '*auto*'):
+        auto_tag = 'auto_tag_name'
+        metadata['auto_tag'] = auto_tag
+
+    if fnmatch.fnmatch(path.lower(), '*beamstop*'):
+        beamstop_tag = 'beamstop_tag_name'
+        metadata['beamstop_tag'] = 'beamstop_tag'
 
 def main():
     import glob

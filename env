@@ -1,0 +1,5 @@
+msg_pack_dir = '/tmp/beamlines/733/tagcam2'
+output_root = '/mnt/lovelace/beamlines/733/tagcam2'
+input_root = '/mnt/lovelace/beamlines'
+input_relative = 'ChanE/2017_11_3_WAXS/*.edf'
+
