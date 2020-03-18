@@ -1,5 +1,6 @@
 from etl.ingest_733 import tagging_callback
 
+
 def test_tagging_callback():
     path = '/foo/bar/giwaxs/goobbledygook.edf'
     tags_dict = tagging_callback(path)
