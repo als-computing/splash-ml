@@ -49,14 +49,14 @@ def test_get_tags(tag_svc):
                            {'color': 'red'},
                            {'num_spokes': 24}]})
 
-    cursor = tag_svc.get_tag_sets_one_filter('color', 'red')
+    cursor = tag_svc.find_tag_sets_one_filter('color', 'red')
     assert count_results(cursor) == 2
 
-    cursor = tag_svc.get_tag_sets_multi_filter([('color', 'red'), ('frame_material', 'steel')])
+    cursor = tag_svc.find_tag_sets_multi_filter([('color', 'red'), ('frame_material', 'steel')])
     assert count_results(cursor) == 1
 
     mongo_filter = {'tags.num_spokes': {'$gt': 3}}
-    cursor = tag_svc.get_tag_sets_mongo(mongo_filter)
+    cursor = tag_svc.find_tag_sets_mongo(mongo_filter)
     assert count_results(cursor) == 3
 
 
@@ -69,8 +69,8 @@ def count_results(cursor):
 
 def test_tag_set(tag_svc):
     tag_svc.create_tag_set(test_tags)
-    return_tags = tag_svc.get_tag_set(test_tags['uid'])
-    return_tag_set = tag_svc.get_tag_set(return_tags['uid'])
+    return_tags = tag_svc.find_tag_set(test_tags['uid'])
+    return_tag_set = tag_svc.find_tag_set(return_tags['uid'])
     assert return_tag_set['uid'] == return_tags['uid']
 
 
