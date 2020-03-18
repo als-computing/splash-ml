@@ -14,7 +14,7 @@ class TagService():
     #https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
     SCHEMA_VERSION = "0.01"
 
-    def __init__(self, client):
+    def __init__(self, client, db_name=None):
         """Initialize a TagService entry using the 
         With the provided pymongo.MongoClient instance, the 
         service will create:
@@ -29,7 +29,9 @@ class TagService():
             mongo client that service will use to connect to
 
         """
-        self._db = client.tagging
+        if db_name is None:
+            db_name = 'tagging'
+        self._db = client[db_name]
         self._collection_tag_sets = self._db.tag_sets
         self._collection_tag_events = self._db.tagging_events
         self._create_indexes()
@@ -206,7 +208,7 @@ class TagService():
 
         self._collection_tag_sets.create_index([
             ('tags.tag_event', 1)
-        ], unique=True)
+        ])
 
         self._collection_tag_sets.create_index([
             ('tags.confidence', 1)
@@ -220,6 +222,10 @@ class TagService():
         self._collection_tag_events.create_index([
             ('name', 1)
         ])
+
+        self._collection_tag_events.create_index([
+            ('uid', 1)
+        ], unique=True)
 
     @staticmethod
     def _inject_uid(tagging_dict):
