@@ -11,6 +11,8 @@ class TagService():
     tag_svc.create_tag_set(tag_set)
     """
     _db = None
+    #https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
+    SCHEMA_VERSION = "0.01"
 
     def __init__(self, client):
         """Initialize a TagService entry using the 
@@ -29,23 +31,56 @@ class TagService():
         """
         self._db = client.tagging
         self._collection_tag_sets = self._db.tag_sets
-        self._coolection_tag_events = self._db.tag_events
+        self._collection_tag_events = self._db.tagging_events
         self._create_indexes()
 
-    def create_tag_set(self, tag_set):
+    def create_tagging_event(self, tag_event):
+        """
+        Create a new tag event. The uid from this tag
+        event will act like a session for all create TagSets
+        in create_tag_set
+        Parameters
+        ----------
+        tagg_event : dict
+              tag_event : dict
+        {
+            "uid": "gc600210432b8f81ad229c12",
+            "model_name": "AlexNet"
+            "metdata": [
+                {"key": "tagger", "value": "ingestor code"}
+            ]
+        }
+
+        Returns
+        ----------
+        str
+            uid for this event, which can be added for all TagSets
+        """
+        self._inject_uid(tag_event)
+        tag_event['schema_version'] = self.SCHEMA_VERSION
+        self._collection_tag_events.insert_one(tag_event)
+        return tag_event['uid']
+
+    def get_tagging_event(self, uid):
+        tagging_event = self._collection_tag_events.find_one({'uid': uid})
+        return tagging_event
+
+    def create_tag_set(self, tag_set, tag_event_uid):
         """Create a new tag set. 
         
         Parameters
         ----------
         tag_set : dict
-            format should be:
-            {
+        
+        tags 
+
+        format should be:
+        {
         "tags": [
         {
             "key": "scattering_geometry",
             "value": "transmission",
             "confidence": 0.9008, 
-            "tag_event": "8c600210432b8f81ad229c1f",
         },
         {
             "key": "sample_detector_distance_name",
@@ -56,13 +91,17 @@ class TagService():
         ]
         }
         
+      
+
         Returns
         -------
         str
-            generated uid of the new tag set
+            generated uid of the new tag set with new tag event
         """
         self._inject_uid(tag_set)
-        # self._col_doc_tags.insert_one(json_util.loads(json_tag_set))
+        tag_set['schema_version'] = self.SCHEMA_VERSION
+        for tag in tag_set['tags']:
+            tag['tag_event'] = tag_event_uid
         self._collection_tag_sets.insert_one(tag_set)
         return tag_set['uid']
 
@@ -146,7 +185,7 @@ class TagService():
         ----------
         mongo_filter : dict 
             mongo find input parameter
-        
+
         Returns
         -------
         cursor
@@ -160,20 +199,28 @@ class TagService():
             ('tags.key', 1),
             ('tags.value', 1),
         ])
-        
+
         self._collection_tag_sets.create_index([
             ('uid', 1)
         ], unique=True)
 
         self._collection_tag_sets.create_index([
-            ('tags.key', 1),
-            ('tags.value', 1),
-        ])
+            ('tags.tag_event', 1)
+        ], unique=True)
 
         self._collection_tag_sets.create_index([
             ('tags.confidence', 1)
         ])
-    
+
+        self._collection_tag_events.create_index([
+            ('metadata.key', 1),
+            ('tags.value', 1)
+        ])
+
+        self._collection_tag_events.create_index([
+            ('name', 1)
+        ])
+
     @staticmethod
     def _inject_uid(tagging_dict):
         if tagging_dict.get('uid') is None:

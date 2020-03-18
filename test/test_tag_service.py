@@ -1,7 +1,7 @@
 import pytest
 from pymongo.errors import DuplicateKeyError
 import mongomock
-from etl.tag_service import TagService
+from athena.tag_service import TagService
 
 
 @pytest.fixture
@@ -15,39 +15,38 @@ def tag_svc(mongodb):
 
 
 def test_unique_uid_tag_set(tag_svc):
-    tag_svc.create_tag_set(test_tags)
+    tagging_event_uid = tag_svc.create_tagging_event(tagging_event)
+    tag_svc.create_tag_set(test_tags, tagging_event_uid)
     with pytest.raises(DuplicateKeyError):
-        tag_svc.create_tag_set({'uid': test_tags['uid']})
-
+        tag_svc.create_tag_set({'uid': test_tags['uid'], 'tags': [{'key': 'foo', 'value': 'bar'}]}, tagging_event_uid)
 
 def test_random_sets(tag_svc):
+    tagging_event_uid = tag_svc.create_tagging_event(tagging_event)
     for x in range(10):
-        tag_svc.create_tag_set({'uid': str(x)})
-    cursor = tag_svc.get_random_tag_sets(3)
-    count = 0
-    for tag_set in cursor:
-        count += 1
-    assert count == 3
+        tag_svc.create_tag_set({'tags': [{'key': 'foo', 'value': 'bar'}]}, tagging_event_uid)
+    cursor = tag_svc.find_random_tag_sets(3)
+    assert count_results(cursor) == 3
 
 
 def test_get_tags(tag_svc):
+    tagging_event_uid = tag_svc.create_tagging_event(tagging_event)
     tag_svc.create_tag_set({'tags': [
                            {'frame_material': 'steel'},
                            {'color': 'purple'},
-                           {'num_spokes': 36}]})
+                           {'num_spokes': 36}]}, tagging_event_uid)
 
     tag_svc.create_tag_set({'tags': [
                            {'frame_material': 'steel'},
                            {'color': 'red'},
-                           {'num_spokes': 36}]})
+                           {'num_spokes': 36}]}, tagging_event_uid)
 
     tag_svc.create_tag_set({'tags': [
                            {'frame_material': 'carbon'},
-                           {'num_spokes': 3}]})
+                           {'num_spokes': 3}]}, tagging_event_uid)
 
     tag_svc.create_tag_set({'tags': [
                            {'color': 'red'},
-                           {'num_spokes': 24}]})
+                           {'num_spokes': 24}]}, tagging_event_uid)
 
     cursor = tag_svc.find_tag_sets_one_filter('color', 'red')
     assert count_results(cursor) == 2
@@ -67,26 +66,42 @@ def count_results(cursor):
     return counter
 
 
+def test_tag_event(tag_svc):
+    tagging_event_uid = tag_svc.create_tagging_event(tagging_event)
+    assert tagging_event_uid is not None
+    return_tagging_event = tag_svc.get_tagging_event(tagging_event_uid)
+    assert return_tagging_event.get('schema_version') == TagService.SCHEMA_VERSION
+
+
 def test_tag_set(tag_svc):
-    tag_svc.create_tag_set(test_tags)
-    return_tags = tag_svc.find_tag_set(test_tags['uid'])
-    return_tag_set = tag_svc.find_tag_set(return_tags['uid'])
-    assert return_tag_set['uid'] == return_tags['uid']
+    tagging_event_uid = tag_svc.create_tagging_event(tagging_event)
+    tag_svc.create_tag_set(test_tags, tagging_event_uid)
+    return_tag_set = tag_svc.find_tag_set(test_tags['uid'])
+    assert return_tag_set.get('schema_version') == TagService.SCHEMA_VERSION
+    
+    for tag in return_tag_set['tags']:
+        assert tag['tag_event'] == tagging_event_uid
+
+    return_tag_set = tag_svc.find_tag_set(return_tag_set['uid'])
+    assert return_tag_set['uid'] == return_tag_set['uid']
 
 
 test_tags = {
+ "asset_uid": "ee600210432b8f81ad229c33",
  "tags": [
    {
      "key": "scattering_geometry",
      "value": "transmission",
-     "confidence": 0.9008, 
-     "tag_event": "8c600210432b8f81ad229c1f",
+     "confidence": 0.9008,
    },
    {
      "key": "sample_detector_distance_name",
      "value": "WAXS",
      "confidence": 0.001, 
-     "tag_event": "8c600210432b8f81ad229c1f",
    }
- ]
+ ],
+}
+
+tagging_event = {
+    "model_name": "PyTestNet"
 }
