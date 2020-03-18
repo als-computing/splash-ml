@@ -66,6 +66,7 @@ def count_results(cursor):
         counter += 1
     return counter
 
+
 def test_tag_set(tag_svc):
     tag_svc.create_tag_set(test_tags)
     return_tags = tag_svc.get_tag_set(test_tags['uid'])

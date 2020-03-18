@@ -1,8 +1,4 @@
-from pymongo import MongoClient
-from bson import json_util
 import uuid
-import json
-from pymodm import connect
 
 
 class TagService():
