@@ -1,7 +1,6 @@
 import etl.ingest
 import os
 import logging
-from mongoengine import connect
 import pytest
 import suitcase
 import pymongo
@@ -48,11 +47,6 @@ def main():
     paths = glob.glob(os.path.join(input_root, os.getenv('input_relative')))
     logger.info(paths)
     etl_executor = etl.ingest.ETLExecutor(input_root, output_root, tagging_callback)
-
-    connect(db=os.getenv('tag_db_name'),
-            username=os.getenv('tag_db_user'),
-            password=os.getenv('tag_db_password'),
-            host=os.getenv('tag_db_host'))
 
     db = pymongo.MongoClient(
             username=os.getenv('tag_db_user'),
