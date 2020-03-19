@@ -14,7 +14,7 @@ class TagService():
     #https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
     SCHEMA_VERSION = "0.01"
 
-    def __init__(self, client, db_name=None):
+    def __init__(self, client, db_name=None, root_catalog=None):
         """Initialize a TagService entry using the 
         With the provided pymongo.MongoClient instance, the 
         service will create:
@@ -28,12 +28,19 @@ class TagService():
         client : pymongo.MongoClient
             mongo client that service will use to connect to
 
+        db_name : str
+            optional mongo database name, default is 'tagging'
+        
+        root_catalog : intake.catalog.Catalog
+            optional root catalog from which to query for 
+            run catalog
         """
         if db_name is None:
             db_name = 'tagging'
         self._db = client[db_name]
         self._collection_tag_sets = self._db.tag_sets
         self._collection_tag_events = self._db.tagging_events
+        self._root_catalog = root_catalog
         self._create_indexes()
 
     def create_tagging_event(self, tag_event):
@@ -149,30 +156,11 @@ class TagService():
             value of tag to query on
         
         Returns
-        -------
-        single TagSet dict
+            single TagSet dict
         """
-        filter = {'tags.' + tag_name: tag_value}
+        filter = {'tags.key': tag_name, 'tags.value': tag_value}
         return self._collection_tag_sets.find(filter)
 
-    def find_tag_sets_multi_filter(self, filter_list):
-        """Find TagSets using multiple tag name/value pairs to filter on
-        
-        Parameters
-        ----------
-        filter_list : list of tuples
-            tuple (name, values) to filter on
-            e.g. [('color', 'red'), ('frame_material', 'steel')]
-        
-        Returns
-        -------
-        cursor
-            cursor for the query
-        """
-        filters = {}
-        for tag_pair in filter_list:
-            filters['tags.' + tag_pair[0]] = tag_pair[1]
-        return self._collection_tag_sets.find(filters)
 
     def find_tag_sets_mongo(self, mongo_filter):
         """Full mongo find 
@@ -203,6 +191,14 @@ class TagService():
         ])
 
         self._collection_tag_sets.create_index([
+            ('tags.key', 1)
+        ])
+
+        self._collection_tag_sets.create_index([
+            ('tags.value', 1),
+        ])
+        
+        self._collection_tag_sets.create_index([
             ('uid', 1)
         ], unique=True)
 
@@ -215,8 +211,8 @@ class TagService():
         ])
 
         self._collection_tag_events.create_index([
-            ('metadata.key', 1),
-            ('tags.value', 1)
+            ('md.key', 1),
+            ('md.value', 1)
         ])
 
         self._collection_tag_events.create_index([
