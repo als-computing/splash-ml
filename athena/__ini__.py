@@ -1,1 +1,0 @@
-#Athena: goddess of wisdom, weaving, the arts, warfare and reason. She is the daughter of Zeus. 

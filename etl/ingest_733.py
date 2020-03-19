@@ -8,7 +8,7 @@ import pymongo
 import fnmatch
 import glob
 from dotenv import load_dotenv
-from athena.tag_service import TagService
+from tagging.tag_service import TagService
 from suitcase.mongo_normalized import Serializer
 
 logger = logging.getLogger('ingest_733')

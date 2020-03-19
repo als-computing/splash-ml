@@ -1,7 +1,7 @@
 import pytest
 from pymongo.errors import DuplicateKeyError
 import mongomock
-from athena.tag_service import TagService
+from tagging.tag_service import TagService
 
 
 @pytest.fixture
