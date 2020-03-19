@@ -9,4 +9,3 @@ scikit-image
 imageio
 suitcase-jsonl
 python-dotenv
-mongoengine
