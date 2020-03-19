@@ -18,20 +18,24 @@ def tagging_callback(path):
     metadata = dict()
     
     tag = get_tags('sample_detector_distance_name', path, ['saxs', 'waxs'])
-    metadata['sample_detector_distance_name'] = tag
+    if tag is not None:
+        metadata['sample_detector_distance_name'] = tag
         
     # get scattering_geometry
     tag = get_tags('scattering_geometry', path, ['gisaxs','giwaxs'])
-    metadata['scattering_geometry'] = tag
+    if tag is not None:
+        metadata['scattering_geometry'] = tag
 
     # get beamline
 
     tag = get_tags('beamline', path, ['beamstop', 'auto'])
-    metadata['beamline'] = tag
+    if tag is not None:
+        metadata['beamline'] = tag
 
     # get calibrant
     tag = get_tags('calibrant', path, ['agb', 'lab6'])
-    metadata['calibrant'] = tag
+    if tag is not None:
+        metadata['calibrant'] = tag
 
     return metadata
 
