@@ -9,3 +9,5 @@ scikit-image
 imageio
 suitcase-jsonl
 python-dotenv
+flask
+flask-restful

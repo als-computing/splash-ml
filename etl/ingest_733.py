@@ -10,6 +10,7 @@ import glob
 from dotenv import load_dotenv
 from tagging.tag_service import TagService
 from suitcase.mongo_normalized import Serializer
+# from suitcase.msgpack import Serializer
 
 logger = logging.getLogger('ingest_733')
 
@@ -72,21 +73,21 @@ def main():
     input_root = os.getenv('input_root')
     output_root = os.getenv('output_root')
     msg_pack_dir = os.getenv('msg_pack_dir')
-    paths = glob.glob(os.path.join(input_root, os.getenv('input_relative')))
+    paths = glob.glob(os.path.join(input_root, os.getenv('input_relative')), recursive=True)
     logger.info(paths)
     etl_executor = etl.ingest.ETLExecutor(input_root, output_root, tagging_callback)
 
     db = pymongo.MongoClient(
             username=os.getenv('tag_db_user'),
             password=os.getenv('tag_db_password'),
-            host=os.getenv('tag_db_host'),
-            authSource='admin')
+            host=os.getenv('tag_db_host'))
 
-    tag_svc = TagService(db, db_name='ml_als')
-
+    tag_svc = TagService(db, db_name='tagging')
+    # serializer = Serializer('/home/dylan/data/beamlines/733')
+    databroker_db_name = os.getenv('tag_databroker_db')
     serializer = Serializer(
-        db.ml_als,
-        db.ml_als)
+        db[databroker_db_name],
+        db[databroker_db_name])
     now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat()
     tagging_event = {
         "model_name": "scattering ingestor",

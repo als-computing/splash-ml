@@ -181,7 +181,7 @@ class TagService():
         cursor
             cursor for the query
         """
-        return self._collection_tag_sets.find(mongo_filter)
+        return self._collection_tag_sets.find({mongo_filter})
 
     def _create_indexes(self):
 

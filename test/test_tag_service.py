@@ -1,5 +1,5 @@
 import pytest
-# from pymongo import MongoClient
+import pymongo
 from pymongo.errors import DuplicateKeyError
 import mongomock
 from tagging.tag_service import TagService
@@ -8,7 +8,7 @@ from tagging.tag_service import TagService
 @pytest.fixture
 def mongodb():
     return mongomock.MongoClient().db
-    # return MongoClient().db
+    # return pymongo.MongoClient()
 
 
 @pytest.fixture
@@ -34,27 +34,27 @@ def test_random_sets(tag_svc):
 def test_get_tags(tag_svc):
     tagging_event_uid = tag_svc.create_tagging_event(tagging_event)
     tag_svc.create_tag_set({'tags': [
-                           {'key': 'frame_material'}, {'value': 'steel'},
-                           {'key': 'color'}, {'value': 'red'},
-                           {'key': 'num_spokes'}, {'value': 36}]}, tagging_event_uid)
+                                {'key': 'frame_material', 'value': 'steel'},
+                                {'key': 'color', 'value': 'red'},
+                                {'key': 'num_spokes', 'value': 36}]}, tagging_event_uid)
 
     tag_svc.create_tag_set({'tags': [
-                           {'key': 'frame_material'}, {'value': 'steel'},
-                           {'key': 'color'}, {'value': 'green'},
-                           {'key': 'num_spokes'}, {'value': 36}]}, tagging_event_uid)
+                                {'key': 'frame_material', 'value': 'steel'},
+                                {'key': 'color', 'value': 'green'},
+                                {'key': 'num_spokes', 'value': 36}]}, tagging_event_uid)
 
     tag_svc.create_tag_set({'tags': [
-                           {'key': 'frame_material'}, {'value': 'carbon'},
-                           {'key': 'num_spokes'}, {'value': 3}]}, tagging_event_uid)
+                                {'key': 'frame_material', 'value': 'carbon'},
+                                {'key': 'num_spokes', 'value': 3}]}, tagging_event_uid)
 
     tag_svc.create_tag_set({'tags': [
-                           {'key': 'color'}, {'value': 'red'},
-                           {'key': 'num_spokes'}, {'value': 24}]}, tagging_event_uid)
+                                {'key': 'color', 'value': 'red'},
+                                {'key': 'num_spokes', 'value': 24}]}, tagging_event_uid)
 
     cursor = tag_svc.find_tag_sets_one_filter('color', 'red')
     assert count_results(cursor) == 2
 
-    mongo_filter = {'tags.num_spokes': {'$gt': 3}}
+    mongo_filter = [{'tags.key': 'num_spokes'}, {'tags.value': {'$gt': 3}}]
     cursor = tag_svc.find_tag_sets_mongo(mongo_filter)
     assert count_results(cursor) == 3
 
