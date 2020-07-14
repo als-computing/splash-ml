@@ -31,8 +31,14 @@ entity asset_tags{
 
 }
 
+entity tags <<sub-document>> {
+    * tag 
+    * confidence
+    * event_id
+}
+
 
 model ||..o{ tagging_event
 tagging_event ||..o{ asset_tags
-
+asset_tags ||..o{ tags
 @enduml
