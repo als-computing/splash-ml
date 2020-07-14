@@ -8,7 +8,7 @@ The Tag Service supports several classes of data, each with its own collection i
 * asset_tags - represents all tags for a given asset, storing tag text, confidence and tagging event. The asset_uid relates to any type of asset, but we intend for this to commonly be a bluesky datum object uid.
 
 ## Entity Relation Diagram
-The following ER Diagram is slighltly modified from traditional ER diagrams to accomodate a document database like Mongo. In some cases, the model uses PK/FK relationship, in others it uses sub-documents to establish relationships.
+The following ER Diagram is slighltly modified from traditional ER diagrams to accomodate a document database like Mongo. In some cases, the model uses PK/FK-style relationship, in others it uses sub-documents to establish relationships.
 
 ![ER Diagram](images/model.png)
 
