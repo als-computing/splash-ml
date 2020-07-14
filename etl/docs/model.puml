@@ -1,0 +1,35 @@
+@startuml
+' hide the spot
+hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+entity model{
+    * **uid**
+    __
+    model_name
+    create_time
+}
+
+entity tagging_event{
+    * **uid**
+    __
+    * model_id
+    run_time
+    accuracy
+}
+
+entity asset_tags{
+    * **uid**
+    ___
+    * event_id
+    * asset_id
+    tags
+
+}
+
+
+model ||..o{ tagging_event
+tagging_event ||..o{ asset_tags
+
+@enduml
