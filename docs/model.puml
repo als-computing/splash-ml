@@ -4,6 +4,9 @@ hide circle
 
 ' avoid problems with angled crows feet
 skinparam linetype ortho
+
+left to right direction
+
 entity model{
     * **uid**
     __
