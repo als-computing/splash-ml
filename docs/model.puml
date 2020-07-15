@@ -7,9 +7,10 @@ skinparam linetype ortho
 
 left to right direction
 
-entity model{
+entity tagger{
     * **uid**
     __
+    type
     model_name
     create_time
 }
@@ -17,7 +18,7 @@ entity model{
 entity tagging_event{
     * **uid**
     __
-    * model_id
+    * taggerl_id
     run_time
     accuracy
 }
@@ -38,7 +39,7 @@ entity tags <<sub-document>> {
 }
 
 
-model ||..o{ tagging_event
+tagger ||..o{ tagging_event
 tagging_event ||..o{ asset_tags
 asset_tags ||..o{ tags
 @enduml

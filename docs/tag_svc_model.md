@@ -34,12 +34,13 @@ The following ER Diagram is slighltly modified from traditional ER diagrams to a
 
     tagging_event = {
         "uid": "wwewere6002104rwerwe81ad229c33",
-        "model_id": "dsfosf9080s9uflkwsnerl3k4j",
+        "tagger_id": "dsfosf9080s9uflkwsnerl3k4j",
         "run_time": 1134433.223,
         "accuracy": 0.7776
     }
 
-    model = {
+    tagger = {
+        "type: "model | humam",
         "model_name": "PyTestNet",
         "uid": "dsfosf9080s9uflkwsnerl3k4j",
         "create_time": 11112333.3  
