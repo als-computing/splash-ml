@@ -1,6 +1,6 @@
 jupyter
 ipython
-databroker==1.0.0b8
+databroker
 bluesky
 fabio
 event_model
