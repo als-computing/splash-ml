@@ -278,36 +278,22 @@ class TagService():
         # variable queries, right?
         self._collection_tagger_sets.create_index([
             ('type', 1),
-            ('model_name', 1),
-            ('create_time', 1)
         ])
 
         self._collection_tagger_sets.create_index([
             ('model_name', 1),
-            ('create_time', 1)
         ])
 
         self._collection_tagger_sets.create_index([
-            ('create_time', 1)
+            ('accuracy', 1)
         ])
-        
+
         self._collection_tagger_sets.create_index([
             ('uid', 1)
         ], unique=True)
 
         self._collection_tagging_events.create_index([
             ('tagger_id', 1),
-            ('run_time', 1),
-            ('accuracy', 1)
-        ])
-
-        self._collection_tagging_events.create_index([
-            ('run_time', 1),
-            ('accuracy', 1)
-        ])
-
-        self._collection_tagging_events.create_index([
-            ('accuracy', 1)
         ])
 
         self._collection_tagging_events.create_index([
@@ -316,24 +302,14 @@ class TagService():
 
         self._collection_asset_tags.create_index([
             ('sample_id', 1),
-            ('tags.tag', 1),
-            ('tags.confidence', 1),
-            ('tags.event_id', 1)
         ])
 
         self._collection_asset_tags.create_index([
             ('tags.tag', 1),
-            ('tags.confidence', 1),
-            ('tags.event_id', 1)
         ])
 
         self._collection_asset_tags.create_index([
             ('tags.confidence', 1),
-            ('tags.event_id', 1)
-        ])
-        
-        self._collection_asset_tags.create_index([
-            ('tags.event_id', 1)
         ])
         
         self._collection_asset_tags.create_index([

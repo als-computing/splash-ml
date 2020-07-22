@@ -22,10 +22,10 @@ def test_unique_uid_tag_set(tag_svc):
     asset_tags_uid = tag_svc.create_asset_tags(asset_tags, tagging_event_uid)
     with pytest.raises(DuplicateKeyError):
         tag_svc.create_tagger({'uid': tagger['uid'], "type": "model",
-                "model_name": "netty", "create_time": 2})
+                "model_name": "netty", "create_time": 2, "accuracy": 1})
     with pytest.raises(DuplicateKeyError):
         tag_svc.create_tagging_event({'uid': tagging_event['uid'], "tagger_id":
-            tagger['uid'],"run_time": 3, "accuracy": 1}, tagger_uid)
+            tagger['uid'],"run_time": 3}, tagger_uid)
     with pytest.raises(DuplicateKeyError):
         tag_svc.create_asset_tags({'uid': asset_tags['uid'], "sample_id": "plants", "tags": []},
             tagging_event_uid)
@@ -34,7 +34,7 @@ def test_random_sets(tag_svc):
     tagger_uid = tag_svc.create_tagger(tagger)
     for x in range(10):
         tagging_event_uid = tag_svc.create_tagging_event({'uid': None, "tagger_id":
-                None, "run_time": 3, "accuracy": 1}, tagger_uid)
+                None, "run_time": 3}, tagger_uid)
         asset_tags_uid = tag_svc.create_asset_tags({'uid': None, "sample_id":
                 "plants", "tags": []}, tagging_event_uid)
     cursor = tag_svc.find_random_event_sets(3)
@@ -50,7 +50,7 @@ def test_get_events_and_tags(tag_svc):
             'uid': None,
             'tagger_id': None,
             'run_time': 1134433.223,
-            'accuracy': 0.7776}, tagger_uid)
+            }, tagger_uid)
     asset_tags_uid = tag_svc.create_asset_tags({
             'uid': None,
             'event_id': None,
@@ -70,7 +70,7 @@ def test_get_events_and_tags(tag_svc):
             'uid': None,
             'tagger_id': None,
             'run_time': 0,
-            'accuracy': 1}, tagger_uid)
+            }, tagger_uid)
     asset_tags_uid = tag_svc.create_asset_tags({
             'uid': None,
             'sample_id': 'paint',
@@ -89,7 +89,7 @@ def test_get_events_and_tags(tag_svc):
             'uid': None,
             'tagger_id': None,
             'run_time': 23,
-            'accuracy': 0}, tagger_uid)
+            }, tagger_uid)
     asset_tags_uid = tag_svc.create_asset_tags({
             'uid': None,
             'sample_id': 'house',
@@ -116,8 +116,8 @@ def test_get_events_and_tags(tag_svc):
     assert count_results(cursor) == 2 
 
     mongo_filter = {'accuracy': {'$gt': 0}}
-    cursor = tag_svc.find_events_mongo(mongo_filter)
-    assert count_results(cursor) == 2 
+    cursor = tag_svc.find_tagger_mongo(mongo_filter)
+    assert count_results(cursor) == 1
     
     mongo_filter = {'type': 'model'}
     cursor = tag_svc.find_tagger_mongo(mongo_filter)
@@ -190,8 +190,7 @@ asset_tags = {
 tagging_event = {
     "uid": None,
     "tagger_id": None,
-    "run_time": 1134433.223,
-    "accuracy": 0.7776
+    "run_time": 1134433.223
     
 }
 
@@ -200,7 +199,8 @@ tagger = {
     "uid": None,
     "type": "model",
     "model_name": "PyTestNet",
-    "create_time": 11112333.3
+    "create_time": 11112333.3,
+    "accuracy": 0.7776
 }
 
 

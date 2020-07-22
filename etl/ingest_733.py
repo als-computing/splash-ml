@@ -106,9 +106,9 @@ def main():
     # Tagger, Event, and Asset are all hard coded in right now for testing
     # purposes.  This should not be kept in further versions
     tagger_uid = tag_svc.create_tagger({'uid':None, 'type':'model',
-            'model_name':'hard_code', 'create_time':10})
+            'model_name':'hard_code', 'create_time':10, 'accuracy': 0.01})
     tagging_event_uid = tag_svc.create_tagging_event({'uid':None,
-            'tagger_id':tagger_uid, 'run_time':20, 'accuracy': 0.01},tagger_uid)
+            'tagger_id':tagger_uid, 'run_time':20},tagger_uid)
     
     count = 1
     for file_path in paths:
