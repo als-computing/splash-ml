@@ -113,26 +113,29 @@ def main():
     count = 1
     for file_path in paths:
         print(file_path)
-        if os.path.getsize(file_path) > 0 :
-            try:
-                raw_metadata, thumb_metadatas, return_metadata = etl_executor.execute(
-                        file_path, [(223, 'jpg'), (223, 'npy')])
-            except TypeError as e:
-                logger.error(e)
-                raise e
-            except Exception as e:
-                logger.error(e)
-                raise e
-            else:          
-                docs = etl.ingest.createDocument(raw_metadata, output_root,
-                        thumb_metadatas, return_metadata)
-                
-                for name, doc in docs:
-                    serializer(name, doc)
-                    if name == 'start':
-                        tag_set = make_tag_set(doc, return_metadata)
-                        tag_svc.create_asset_tags(tag_set, tagging_event_uid)
-                        count += 1
+        if os.path.getsize(file_path) = 0  :
+            continue
+
+
+        try:
+            raw_metadata, thumb_metadatas, return_metadata = etl_executor.execute(
+                    file_path, [(223, 'jpg'), (223, 'npy')])
+        except TypeError as e:
+            logger.error(e)
+            raise e
+        except Exception as e:
+            logger.error(e)
+            raise e
+        else:          
+            docs = etl.ingest.createDocument(raw_metadata, output_root,
+                    thumb_metadatas, return_metadata)
+            
+            for name, doc in docs:
+                serializer(name, doc)
+                if name == 'start':
+                    tag_set = make_tag_set(doc, return_metadata)
+                    tag_svc.create_asset_tags(tag_set, tagging_event_uid)
+                    count += 1
 
 
 def make_tag_set(start_doc, tags_dict):

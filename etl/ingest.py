@@ -176,11 +176,11 @@ class ETLExecutor():
 def createDocument(raw_metadata: ImageMetadata,
                    output_root,
                    thumbnail_metadatas: list = None,
-                   return_metadata = None):
+                   run_metadata = None):
 
     timestamp = time.time()
     # start document
-    run_bundle = event_model.compose_run(metadata = return_metadata, uid=raw_metadata.hash)
+    run_bundle = event_model.compose_run(metadata = run_metadata, uid=raw_metadata.hash)
     yield 'start', run_bundle.start_doc
 
     # event descriptor document for raw
