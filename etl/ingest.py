@@ -1,7 +1,7 @@
 import os
 import time
 import fabio
-import event_model
+import event_model  
 import logging
 import numpy as np
 from PIL import Image, ImageOps
@@ -9,6 +9,7 @@ from skimage.transform import resize
 import imageio
 import shutil
 import hashlib
+import uuid
 from collections import namedtuple
 # import pymongo
 
@@ -19,7 +20,8 @@ from collections import namedtuple
 
 logger = logging.getLogger('ingest')
 
-FILE_SPEC_MAPPING = {'tiff': 'TIFF', 'tif': 'TIFF', 'jpg': 'JPEG', 'jpeg': 'JPEG', 'edf': 'EDF'}
+FILE_SPEC_MAPPING = {'tiff': 'TIFF', 'tif': 'TIFF', 'jpg': 'JPEG', 'jpeg':
+        'JPEG', 'edf': 'EDF', 'npy': 'NPY'}
 ImageMetadata = namedtuple('ImageMetadata',
                            'hash path shape field_name file_ext')
 
@@ -94,24 +96,25 @@ class ETLExecutor():
         """
         if formats:
             for _, file_type in formats:
-                if file_type not in ['tif', 'tiff', 'jpeg', 'jpg']:
-                    raise TypeError(f'type not supported: {file_type}')
+                if file_type not in ['npy', 'tiff', 'jpeg', 'jpg']:
+                    raise TypeError('type not supported: {file_type}')
         relative_path = os.path.relpath(path, self.input_root)
         relative_path_hash = self._hash_string(os.path.dirname(relative_path))
-        file_payload_hash = self._hash_file(path)
+        # file_payload_hash = self._hash_file(path)
+        file_db_key = str(uuid.uuid4())
         new_file_ext = os.path.splitext(path)[-1]
 
         dest_folder = os.path.join(self.output_root, relative_path_hash)
         os.makedirs(dest_folder, exist_ok=True)
         raw_file_path = os.path.join(
                         dest_folder, 
-                        file_payload_hash + new_file_ext)
+                        file_db_key + new_file_ext)
         shutil.copyfile(path, raw_file_path)
         thumbnail_metadatas = []
         raw_img = fabio.open(raw_file_path)
         raw_file_name = os.path.normpath(os.path.split(raw_file_path)[-1])
         raw_metadata = ImageMetadata(
-            file_payload_hash,
+            file_db_key,
             raw_file_path,
             raw_img.data.shape,
             'raw', 
@@ -141,8 +144,11 @@ class ETLExecutor():
         file_name = os.path.splitext(raw_file_name)[0]
         thumbnail_path = os.path.join(processed_path_root, '%s_%s.%s' %
                                       (file_name, size, file_type))
-        imageio.imwrite(thumbnail_path,
-                        auto_contrast_image)
+        if file_type == 'npy': 
+            np.save(thumbnail_path, auto_contrast_image)
+        else: 
+            imageio.imwrite(thumbnail_path, auto_contrast_image)
+
         thumbnail_metadata = ImageMetadata(
             None,
             thumbnail_path,
@@ -166,21 +172,22 @@ class ETLExecutor():
         hasher.update(s.encode('utf-8'))
         return hasher.hexdigest()
 
-
+# Add a dictionary param and pass to metadata in run_bundle
 def createDocument(raw_metadata: ImageMetadata,
                    output_root,
-                   thumbnail_metadatas: list = None):
+                   thumbnail_metadatas: list = None,
+                   run_metadata = None):
 
     timestamp = time.time()
     # start document
-    run_bundle = event_model.compose_run(uid=raw_metadata.hash)
+    run_bundle = event_model.compose_run(metadata = run_metadata, uid=raw_metadata.hash)
     yield 'start', run_bundle.start_doc
 
     # event descriptor document for raw
     source = 'ALS 733'  # TODO -- find embedded source info?
-    raw_data_keys = {'raw': {'source': source, 'dtype': 'array', 'external': 'FILESTORE:', 'dtype': 'array',
-                             'shape': [raw_metadata.shape[0], 
-                                       raw_metadata.shape[1]]}}
+    raw_data_keys = {'raw': {'source':source, 'dtype':'array',
+            'external':'FILESTORE:', 'dtype':'array', 'shape':
+            [raw_metadata.shape[0], raw_metadata.shape[1] ]}}
     raw_stream_name = 'primary'
     raw_stream_bundle = run_bundle.compose_descriptor(
         data_keys=raw_data_keys,
@@ -215,8 +222,8 @@ def createDocument(raw_metadata: ImageMetadata,
                            for thumnbnail_metadata in thumbnail_metadatas} 
     thumbnail_stream_name = 'thumbnails'
     thumbnail_stream_bundle = run_bundle.compose_descriptor(
-        data_keys=thumbnail_data_keys,
-        name=thumbnail_stream_name)
+            data_keys=thumbnail_data_keys,
+            name=thumbnail_stream_name)
     yield 'descriptor', thumbnail_stream_bundle.descriptor_doc
 
     thumbnail_data = {}
@@ -225,10 +232,10 @@ def createDocument(raw_metadata: ImageMetadata,
     for thumbnail_metadata in thumbnail_metadatas:
         # each thumbnail resource
         thumbnail_resource = run_bundle.compose_resource(
-            spec=map_spec_from_file_ext(thumbnail_metadata.file_ext),
-            root=output_root,
-            resource_path=os.path.relpath(thumbnail_metadata.path, output_root),
-            resource_kwargs={})
+                spec=map_spec_from_file_ext(thumbnail_metadata.file_ext),
+                root=output_root,
+                resource_path=os.path.relpath(thumbnail_metadata.path, output_root),
+                resource_kwargs={})
         yield 'resource', thumbnail_resource.resource_doc
 
         # thumbnail datum
