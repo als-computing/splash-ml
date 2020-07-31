@@ -1,7 +1,7 @@
 import os
 import time
 import fabio
-import event_model
+import event_model  
 import logging
 import numpy as np
 from PIL import Image, ImageOps
@@ -20,7 +20,8 @@ from collections import namedtuple
 
 logger = logging.getLogger('ingest')
 
-FILE_SPEC_MAPPING = {'tiff': 'TIFF', 'tif': 'TIFF', 'jpg': 'JPEG', 'jpeg': 'JPEG', 'edf': 'EDF'}
+FILE_SPEC_MAPPING = {'tiff': 'TIFF', 'tif': 'TIFF', 'jpg': 'JPEG', 'jpeg':
+        'JPEG', 'edf': 'EDF', 'npy': 'NPY'}
 ImageMetadata = namedtuple('ImageMetadata',
                            'hash path shape field_name file_ext')
 
@@ -95,8 +96,8 @@ class ETLExecutor():
         """
         if formats:
             for _, file_type in formats:
-                if file_type not in ['tif', 'tiff', 'jpeg', 'jpg']:
-                    raise TypeError(f'type not supported: {file_type}')
+                if file_type not in ['npy', 'tiff', 'jpeg', 'jpg']:
+                    raise TypeError('type not supported: {file_type}')
         relative_path = os.path.relpath(path, self.input_root)
         relative_path_hash = self._hash_string(os.path.dirname(relative_path))
         # file_payload_hash = self._hash_file(path)
@@ -143,8 +144,11 @@ class ETLExecutor():
         file_name = os.path.splitext(raw_file_name)[0]
         thumbnail_path = os.path.join(processed_path_root, '%s_%s.%s' %
                                       (file_name, size, file_type))
-        imageio.imwrite(thumbnail_path,
-                        auto_contrast_image)
+        if file_type == 'npy': 
+            np.save(thumbnail_path, auto_contrast_image)
+        else: 
+            imageio.imwrite(thumbnail_path, auto_contrast_image)
+
         thumbnail_metadata = ImageMetadata(
             None,
             thumbnail_path,
@@ -181,9 +185,9 @@ def createDocument(raw_metadata: ImageMetadata,
 
     # event descriptor document for raw
     source = 'ALS 733'  # TODO -- find embedded source info?
-    raw_data_keys = {'raw': {'source': source, 'dtype': 'array', 'external': 'FILESTORE:', 'dtype': 'array',
-                             'shape': [raw_metadata.shape[0], 
-                                       raw_metadata.shape[1]]}}
+    raw_data_keys = {'raw': {'source':source, 'dtype':'array',
+            'external':'FILESTORE:', 'dtype':'array', 'shape':
+            [raw_metadata.shape[0], raw_metadata.shape[1] ]}}
     raw_stream_name = 'primary'
     raw_stream_bundle = run_bundle.compose_descriptor(
         data_keys=raw_data_keys,
@@ -218,8 +222,8 @@ def createDocument(raw_metadata: ImageMetadata,
                            for thumnbnail_metadata in thumbnail_metadatas} 
     thumbnail_stream_name = 'thumbnails'
     thumbnail_stream_bundle = run_bundle.compose_descriptor(
-        data_keys=thumbnail_data_keys,
-        name=thumbnail_stream_name)
+            data_keys=thumbnail_data_keys,
+            name=thumbnail_stream_name)
     yield 'descriptor', thumbnail_stream_bundle.descriptor_doc
 
     thumbnail_data = {}
@@ -228,10 +232,10 @@ def createDocument(raw_metadata: ImageMetadata,
     for thumbnail_metadata in thumbnail_metadatas:
         # each thumbnail resource
         thumbnail_resource = run_bundle.compose_resource(
-            spec=map_spec_from_file_ext(thumbnail_metadata.file_ext),
-            root=output_root,
-            resource_path=os.path.relpath(thumbnail_metadata.path, output_root),
-            resource_kwargs={})
+                spec=map_spec_from_file_ext(thumbnail_metadata.file_ext),
+                root=output_root,
+                resource_path=os.path.relpath(thumbnail_metadata.path, output_root),
+                resource_kwargs={})
         yield 'resource', thumbnail_resource.resource_doc
 
         # thumbnail datum

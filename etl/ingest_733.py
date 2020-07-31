@@ -116,7 +116,7 @@ def main():
         if os.path.getsize(file_path) > 0 :
             try:
                 raw_metadata, thumb_metadatas, return_metadata = etl_executor.execute(
-                        file_path, [(256, 'jpg'), (256, 'tiff')])
+                        file_path, [(223, 'jpg'), (223, 'npy')])
             except TypeError as e:
                 logger.error(e)
                 raise e
