@@ -47,6 +47,13 @@ class TagService():
         self._root_catalog = root_catalog
         self._create_indexes()
 
+
+    def _clean_mongo_ids(self, data):
+        if '_id' in data:
+            # remove the mongo id before validating
+            del data["_id"]
+
+
     def create_tagger(self, tagger):
         """
         Create a new tagger data set. The uid from this tagger will act like a
@@ -71,6 +78,7 @@ class TagService():
         if len(validation_errors) == 0:
             tagger['schema_version'] = self.SCHEMA_VERSION
             self._collection_tagger_sets.insert_one(tagger)
+            self._clean_mongo_ids(tagger)
             return tagger['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -106,6 +114,7 @@ class TagService():
         if len(validation_errors) == 0:
             tagging_event['schema_version'] = self.SCHEMA_VERSION
             self._collection_tagging_events.insert_one(tagging_event)
+            self._clean_mongo_ids(tagging_event)
             return tagging_event['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -146,6 +155,7 @@ class TagService():
         if len(validation_errors) == 0:
             asset_tags['schema_version'] = self.SCHEMA_VERSION
             self._collection_asset_tags.insert_one(asset_tags)
+            self._clean_mongo_ids(asset_tags)
             return asset_tags['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -223,7 +233,8 @@ class TagService():
             List of tuples with information about any validation errors
         """
         validator = jsonschema.Draft7Validator(schema, format_checker=jsonschema.draft7_format_checker)
-        errors = validator.iter_errors(data)
+        validate_data = data.copy()
+        errors = validator.iter_errors(validate_data)
         error_list = [(error.message, str(error.path), error) for error in errors]
         return error_list
 
