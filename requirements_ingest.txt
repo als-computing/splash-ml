@@ -11,3 +11,4 @@ suitcase-jsonl
 python-dotenv
 flask
 flask-restful
+jsonschema[format_nongpl]
