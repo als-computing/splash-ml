@@ -113,7 +113,7 @@ def main():
     count = 1
     for file_path in paths:
         print(file_path)
-        if os.path.getsize(file_path) = 0  :
+        if os.path.getsize(file_path) == 0:
             continue
 
 
