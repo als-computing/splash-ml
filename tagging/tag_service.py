@@ -47,6 +47,11 @@ class TagService():
         self._root_catalog = root_catalog
         self._create_indexes()
 
+
+    def _scrub_mongo_ids(self, data):
+        if '_id' in data:
+            del data['_id']
+
     def create_tagger(self, tagger):
         """
         Create a new tagger data set. The uid from this tagger will act like a
@@ -71,6 +76,7 @@ class TagService():
         if len(validation_errors) == 0:
             tagger['schema_version'] = self.SCHEMA_VERSION
             self._collection_tagger_sets.insert_one(tagger)
+            self._scrub_mongo_ids(tagger)
             return tagger['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -106,6 +112,7 @@ class TagService():
         if len(validation_errors) == 0:
             tagging_event['schema_version'] = self.SCHEMA_VERSION
             self._collection_tagging_events.insert_one(tagging_event)
+            self._scrub_mongo_ids(tagging_event)
             return tagging_event['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -146,6 +153,7 @@ class TagService():
         if len(validation_errors) == 0:
             asset_tags['schema_version'] = self.SCHEMA_VERSION
             self._collection_asset_tags.insert_one(asset_tags)
+            self._scrub_mongo_ids(asset_tags)
             return asset_tags['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
