@@ -68,9 +68,10 @@ class TagService():
         """
         self._inject_uid(tagger)
         validation_errors = self.validate_json(tagger, schema_tagger)
-        if len(validation_errors) == 0:
+        if len(validation_errors) == 0:  # TODO: condense into one method called in each scenario
             tagger['schema_version'] = self.SCHEMA_VERSION
             self._collection_tagger_sets.insert_one(tagger)
+            self._clean_mongo_ids(tagger)
             return tagger['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -106,6 +107,7 @@ class TagService():
         if len(validation_errors) == 0:
             tagging_event['schema_version'] = self.SCHEMA_VERSION
             self._collection_tagging_events.insert_one(tagging_event)
+            self._clean_mongo_ids(tagging_event)
             return tagging_event['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -146,6 +148,7 @@ class TagService():
         if len(validation_errors) == 0:
             asset_tags['schema_version'] = self.SCHEMA_VERSION
             self._collection_asset_tags.insert_one(asset_tags)
+            self._clean_mongo_ids(asset_tags)
             return asset_tags['uid']
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -199,6 +202,7 @@ class TagService():
                     {'$set': {'tags': doc_tags['tags']}})
 
             doc_tags = self._collection_asset_tags.find_one({'uid': asset_tags_uid})
+            self._clean_mongo_ids(doc_tags)
             return doc_tags
         else:
             raise BadDataError("Bad data", validation_errors)
@@ -404,6 +408,12 @@ class TagService():
     def _inject_uid(tagging_dict):
         if tagging_dict.get('uid') is None:
             tagging_dict['uid'] = str(uuid.uuid4())
+
+    @staticmethod
+    def _clean_mongo_ids(data):
+        if '_id' in data:
+            # Remove the internal mongo id before schema validation
+            del data['_id']
 
 
 class BadDataError(Exception):
