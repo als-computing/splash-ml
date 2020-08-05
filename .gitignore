@@ -104,6 +104,9 @@ celerybeat.pid
 # vscode
 .vscode/
 
+# PyCharm / JetBrains
+.idea/
+
 # Environments
 .env
 .venv
