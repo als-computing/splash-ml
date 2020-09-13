@@ -32,7 +32,7 @@ def map_spec_from_file_ext(file_type):
 
 class ETLExecutor():
 
-    def __init__(self, input_root, output_root, tagging_callback=None):
+    def __init__(self, input_root, output_root, properties_callback=None):
         """init
         Parameters
         ----------
@@ -43,7 +43,7 @@ class ETLExecutor():
         """
         self.input_root = input_root
         self.output_root = output_root
-        self.tagging_callback = tagging_callback
+        self.properties_callback = properties_callback
         
     def execute(self, path, formats=list()):
         """Function for processing a number
@@ -126,8 +126,8 @@ class ETLExecutor():
                                        dest_folder,
                                        *format))
         tags_dict = None
-        if self.tagging_callback:
-            tags_dict = self.tagging_callback(path)
+        if self.properties_callback:
+            tags_dict = self.properties_callback(path)
 
         return raw_metadata, thumbnail_metadatas, tags_dict
 

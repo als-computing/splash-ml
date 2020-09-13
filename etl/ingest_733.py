@@ -15,7 +15,7 @@ from suitcase.mongo_normalized import Serializer
 logger = logging.getLogger('ingest_733')
 
 # todo - change to layout that works with models from tensorflow.
-def tagging_callback(path):
+def properties_callback(path):
     metadata = dict()
     
     tag = get_tags('sample_detector_distance_name', path, ['saxs', 'waxs'])
@@ -81,7 +81,7 @@ def main():
     paths = glob.glob(os.path.join(input_root,
             os.getenv('input_relative'))+'/**/*.*', recursive=True)
     logger.info(paths)
-    etl_executor = etl.ingest.ETLExecutor(input_root, output_root, tagging_callback)
+    etl_executor = etl.ingest.ETLExecutor(input_root, output_root, properties_callback)
 
     db = pymongo.MongoClient(
             username=os.getenv('tag_db_user'),
@@ -144,14 +144,12 @@ def main():
             for name, doc in docs:
                 serializer(name, doc)
                 if name == 'start':
-                    tag_set = make_tag_set(doc, return_metadata)
+                    tag_set = make_tag_set(doc)
                     tag_svc.create_asset_tags(tag_set, tagging_event_uid)
                     count += 1
 
 
-def make_tag_set(start_doc, tags_dict):
-    if tags_dict is None:
-        return None
+def make_tag_set(start_doc):
     run_uid = start_doc['uid']
     tags = []
     tags.extend([

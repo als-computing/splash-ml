@@ -29,10 +29,10 @@ def output_root(tmpdir):
 def test_register_tagger(tmp_image_file, src_root, output_root):
     tags_dict = {"foo": "bar", "foo2": "bar2"}
     
-    def my_tagging_callback(source_path):
+    def my_properties_callback(source_path):
         return tags_dict
 
-    etl_executor = ETLExecutor(src_root, output_root, my_tagging_callback)
+    etl_executor = ETLExecutor(src_root, output_root, my_properties_callback)
     _, _, return_tags = etl_executor.execute(tmp_image_file)
     assert return_tags == tags_dict
 
