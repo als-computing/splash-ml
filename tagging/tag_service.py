@@ -1,9 +1,7 @@
-from attr import dataclass
-from typing import List
+from typing import Iterator, List
 import uuid
 
 from pymongo.mongo_client import MongoClient
-from pydantic import parse_obj_as
 
 from .model import (
     Asset,
@@ -14,6 +12,7 @@ from .model import (
     Tagger,
     TaggingEvent
 )
+
 
 class AssetNotFound(Exception):
     pass
@@ -29,8 +28,7 @@ class TagService():
     tag_svc.create_tagger(tagger)
     """
 
-
-    def __init__(self, client, db_name=None, root_catalog=None):
+    def __init__(self, client, db_name=None):
         """Initialize a TagService entry using the 
         With the provided pymongo.MongoClient instance, the 
         service will create:
@@ -58,7 +56,6 @@ class TagService():
         self._collection_taggers = self._db.tagger
         self._collection_tagging_events = self._db.tagging_event
         self._collection_asset = self._db.asset
-        self._root_catalog = root_catalog
         self._create_indexes()
 
     def create_tagger(self, tagger: NewTagger) -> Tagger:
@@ -67,12 +64,12 @@ class TagService():
         session for all create tagging_events in create_tagging_event
         Parameters
         ----------
-        tagger : Tagger
+        tagger : NewTagger
 
 
         Returns
         ----------
-        str
+        Tagger
             uid for this tagger, which can be added for all Tagging events
         """
         tagger_dict = tagger.dict()
@@ -83,26 +80,17 @@ class TagService():
         return Tagger(**tagger_dict)
 
     def create_tagging_event(self, event: NewTaggingEvent) -> TaggingEvent:
-        """
-        Create a new tagging_event data set.  The uid for this tag event will label
-        the event to create asset tags on 
+        """ Create a new tagging_event data set.  The uid for this tag event will label
+        the event to create asset tags on.
+
         Parameters
         ----------
-        tagging_event : dict
-        {
-            "uid": "taggingEventUID",
-            "tagger_id": "taggerUID",
-            "run_time": #,
-            "accuracy": #
-        }
-
-        tagger_uid : str
-            ID of this event's tagger
+        tagging_event : NewTaggingEvent
 
         Returns
         ----------
-        str
-            uid for this event, which can be added to asset_tags
+        TaggingEvent
+            TaggingEven object, with uid in it
         """
         event_dict = event.dict()
         self._inject_uid(event_dict)
@@ -112,32 +100,17 @@ class TagService():
         return TaggingEvent(**event_dict)
 
     def create_asset(self, asset: NewAsset) -> Asset:
-        """
-        Create a new asset_tags data set.  The uid for this asset tag set
+        """ Create a new asset_tags data set.  The uid for this asset tag set
         distinguishes it from others and can be used to find it later.
+        
         Parameters
         ----------
-        asset_tags : dict
-        {
-            "uid": "assetTagsUID,
-            "sample_id": "randomid",
-            "tags": [
-                {
-                    "tag": "attribute",
-                    "confidence": #
-                    "event_id": "taggingEventUID",
-                }
-            ]
-        }
-
-        tagging_event_uid : str
-            ID of this tag set's tagging event
+        asset_tags : NewAsset
 
         Returns
         ----------
-        str
-            uid for this tag set, which can be used to find and add more tags to
-            asset tags
+        Asset
+            Asset object, with uid in it
         """
         asset_dict = asset.dict()
         self._inject_uid(asset_dict)
@@ -146,36 +119,20 @@ class TagService():
         self._clean_mongo_ids(asset_dict)
         return Asset(**asset_dict)
 
-
     def add_tags(self, tags: List[Tag], asset_uid: str) -> Asset:
-        """
-        Add new asset tags to an existing asset_tags data set
+        """ Add new asset tags to an existing asset_tags data set
         with the given uid.
         Parameters
         ----------
-        tags : list
-        [
-            {
-                "tag": "attribute",
-                "confidence": #
-                "event_id": "taggingEventUID",
-            },
-            {
-                "tag": "attribute2",
-                "confidence": #
-                "event_id": "taggingEventUID",
-            }
-        ]
+        tags : List[Tag]
 
         asset_tags_uid : str
             ID of the existing tag set to update
 
-        tagging_event_uid : str
-            ID of the tagging event of the tags in the list
 
         Returns
         ----------
-        dict
+        Asset
             The updated tag set (full asset tag object)
         """
 
@@ -196,7 +153,19 @@ class TagService():
         self._clean_mongo_ids(doc_tags)
         return Asset.parse_obj(doc_tags)
 
-    def find_taggers(self, **search_filters):
+    def find_taggers(self, **search_filters) -> Iterator[Tagger]:
+        """ Searches database for tags using the search_filters as query terms.
+
+        Parameters
+        ----------
+        search_filters: str, str
+            keyword arguments that are added to underlying query
+
+        Yields
+        -------
+        Iterator[Tagger]
+            [description]
+        """
         subqueries = []
         query = {}
         for k, v in search_filters.items():
@@ -224,15 +193,13 @@ class TagService():
         self._clean_mongo_ids(doc_tags)
         return Asset(**doc_tags)
 
-    def find_assets(self, **search_filters):
-        """Find all TagSets matching tag_name and tag_value
+    def find_assets(self, **search_filters) -> Iterator[Asset]:
+        """Find all TagSets matching search filters
 
         Parameters
         ----------
-        tag_name : str
-            name of tag to query on
-        tag_confidence : float
-            confidence level of tag to query on
+        search_filters: str, str
+            keyword arguments that are added to underlying query
 
         Returns
         -------
@@ -306,10 +273,11 @@ class TagService():
             # Remove the internal mongo id before schema validation
             del data['_id']
 
-@dataclass
+
 class Context():
     db: MongoClient = None
     tag_svc: TagService = None
+
 
 context = Context()
 
