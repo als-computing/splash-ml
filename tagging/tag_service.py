@@ -226,12 +226,9 @@ class TagService():
         ])
 
         self._collection_taggers.create_index([
-            ('model_name', 1),
-        ])
+            ('name', 1),
+        ]),
 
-        self._collection_taggers.create_index([
-            ('accuracy', 1)
-        ])
 
         self._collection_taggers.create_index([
             ('uid', 1)
@@ -246,16 +243,21 @@ class TagService():
         ], unique=True)
 
         self._collection_asset.create_index([
-            ('sample_id', 1),
-        ])
+            ("$**", "text"),
+        ]),
 
         self._collection_asset.create_index([
-            ('tags.tag', 1),
+            ('tags.name', 1),
+        ]),
+
+        self._collection_asset.create_index([
+            ('tags.value', 1),
         ])
 
         self._collection_asset.create_index([
             ('tags.confidence', 1),
-        ])
+        ]),
+
         
         self._collection_asset.create_index([
             ('uid', 1)
