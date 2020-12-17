@@ -22,15 +22,15 @@ class TagService():
     """The TagService provides access to the tagging database
     as well as an interface into databroker which has ingested
     taggable files (both raw and thumbnailed)
-    
+
     Usage looks something like:
     tag_svc = TagService(pymongo_client)
     tag_svc.create_tagger(tagger)
     """
 
     def __init__(self, client, db_name=None):
-        """Initialize a TagService entry using the 
-        With the provided pymongo.MongoClient instance, the 
+        """Initialize a TagService entry using the
+        With the provided pymongo.MongoClient instance, the
         service will create:
         - a database called 'tagging'
         - a collection called 'tagger'
@@ -45,9 +45,9 @@ class TagService():
 
         db_name : str
             optional mongo database name, default is 'tagging'
-        
+
         root_catalog : intake.catalog.Catalog
-            optional root catalog from which to query for 
+            optional root catalog from which to query for
             run catalog
         """
         if db_name is None:
@@ -102,7 +102,7 @@ class TagService():
     def create_asset(self, asset: NewAsset) -> Asset:
         """ Create a new asset_tags data set.  The uid for this asset tag set
         distinguishes it from others and can be used to find it later.
-        
+
         Parameters
         ----------
         asset_tags : NewAsset
@@ -193,7 +193,7 @@ class TagService():
         self._clean_mongo_ids(doc_tags)
         return Asset(**doc_tags)
 
-    def find_assets(self, **search_filters) -> Iterator[Asset]:
+    def find_assets(self,  **search_filters) -> Iterator[Asset]:
         """Find all TagSets matching search filters
 
         Parameters
@@ -229,7 +229,6 @@ class TagService():
             ('name', 1),
         ]),
 
-
         self._collection_taggers.create_index([
             ('uid', 1)
         ], unique=True)
@@ -258,7 +257,6 @@ class TagService():
             ('tags.confidence', 1),
         ]),
 
-        
         self._collection_asset.create_index([
             ('uid', 1)
         ], unique=True)
