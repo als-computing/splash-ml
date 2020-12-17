@@ -136,3 +136,6 @@ dmypy.json
 scratch/
 
 .diagrams/
+
+# a place to play
+.scratch/

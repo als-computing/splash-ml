@@ -15,7 +15,7 @@ The following ER Diagram is slighltly modified from traditional ER diagrams to a
 ## Example Documents
 
 
-    asset_tags = {
+    tags = {
         "asset_uid": "ee600210432b8f81ad229c33",
         "sample_id": "house paint 1234",
         "tags": [

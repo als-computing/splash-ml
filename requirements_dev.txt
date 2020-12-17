@@ -1,3 +1,0 @@
-mongomock
-pymongo
-pytest
