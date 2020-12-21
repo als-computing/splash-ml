@@ -5,9 +5,6 @@ from pymongo.mongo_client import MongoClient
 
 from .model import (
     Asset,
-    NewAsset,
-    NewTagger,
-    NewTaggingEvent,
     Tag,
     Tagger,
     TaggingEvent
@@ -54,11 +51,11 @@ class TagService():
             db_name = 'tagging'
         self._db = client[db_name]
         self._collection_taggers = self._db.tagger
-        self._collection_tagging_events = self._db.tagging_event
+        self._collection_tagging_event = self._db.tagging_event
         self._collection_asset = self._db.asset
         self._create_indexes()
 
-    def create_tagger(self, tagger: NewTagger) -> Tagger:
+    def create_tagger(self, tagger: Tagger) -> Tagger:
         """
         Create a new tagger data set. The uid from this tagger will act like a
         session for all create tagging_events in create_tagging_event
@@ -79,7 +76,7 @@ class TagService():
         self._clean_mongo_ids(tagger_dict)
         return Tagger(**tagger_dict)
 
-    def create_tagging_event(self, event: NewTaggingEvent) -> TaggingEvent:
+    def create_tagging_event(self, event: TaggingEvent) -> TaggingEvent:
         """ Create a new tagging_event data set.  The uid for this tag event will label
         the event to create asset tags on.
 
@@ -96,10 +93,16 @@ class TagService():
         self._inject_uid(event_dict)
 
         # event_dict['schema_version'] = self.SCHEMA_VERSION
-        self._collection_tagging_events.insert_one(event_dict)
+        self._collection_tagging_event.insert_one(event_dict)
+        self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
 
-    def create_asset(self, asset: NewAsset) -> Asset:
+    def retrieve_tagging_event(self, uid: str) -> TaggingEvent:
+        t_e_dict = self._collection_tagging_event.find_one({'uid': uid})
+        self._clean_mongo_ids(t_e_dict)
+        return TaggingEvent.parse_obj(t_e_dict)
+
+    def create_asset(self, asset: Asset) -> Asset:
         """ Create a new asset_tags data set.  The uid for this asset tag set
         distinguishes it from others and can be used to find it later.
 
@@ -233,11 +236,11 @@ class TagService():
             ('uid', 1)
         ], unique=True)
 
-        self._collection_tagging_events.create_index([
+        self._collection_tagging_event.create_index([
             ('tagger_id', 1),
         ])
 
-        self._collection_tagging_events.create_index([
+        self._collection_tagging_event.create_index([
             ('uid', 1)
         ], unique=True)
 

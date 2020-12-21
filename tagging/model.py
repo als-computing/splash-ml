@@ -9,7 +9,11 @@ LABEL_NAME = "label"
 SCHEMA_VERSION = "1.0"
 
 
-class NewTagger(BaseModel):
+class Persistable(BaseModel):
+    uid: Optional[str]
+
+
+class Tagger(Persistable):
     schema_version: str = SCHEMA_VERSION
     type: str
     name: Optional[str] = Field(description="optional name of model that produces tags")
@@ -18,11 +22,7 @@ class NewTagger(BaseModel):
         extra = Extra.forbid
 
 
-class Tagger(NewTagger):
-    uid: str
-
-
-class NewTaggingEvent(BaseModel):
+class TaggingEvent(Persistable):
     schema_version: str = SCHEMA_VERSION
     tagger_id: str
     run_time: datetime
@@ -39,33 +39,23 @@ class Tag(BaseModel):
     event_id: Optional[str] = None
 
 
-class TaggingEvent(NewTaggingEvent):
-    uid: str
-
-
-class LocatorType(str, Enum):
+class AssetType(str, Enum):
     dbroker = "dbroker"
     file = "file"
     web = "web"
 
 
-class AssetLocator(BaseModel):
-    uid: str
-    type: LocatorType
-    locator: str
-    kwargs: Optional[Dict[str, str]]
-
-
-class NewAsset(BaseModel):
+class Asset(Persistable):
     schema_version: str = SCHEMA_VERSION
-    type: Optional[str]
+    type: AssetType
+    uri: str
+    location_kwargs: Optional[Dict[str, str]]
     sample_id: Optional[str]
     tags: Optional[List[Tag]]
-    asset_locator: Optional[AssetLocator]
-
+ 
     class Config:
         extra = Extra.forbid
 
 
-class Asset(NewAsset):
-    uid: str
+class FileAsset(Asset):
+    type = AssetType.file
