@@ -1,0 +1,5 @@
+graphene
+graphene-pydantic
+pymongo
+pydantic
+uvicorn

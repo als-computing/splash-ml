@@ -11,8 +11,7 @@ entity tagger{
     * **uid**
     __
     type
-    model_name
-    create_time
+    name
 }
 
 entity tagging_event{
@@ -23,11 +22,12 @@ entity tagging_event{
     accuracy
 }
 
-entity asset_tags{
+entity asset{
     * **uid**
     ___
     * event_id
     * asset_id
+    asset_locator
     tags
 
 }
@@ -40,6 +40,6 @@ entity tags <<sub-document>> {
 
 
 tagger ||..o{ tagging_event
-tagging_event ||..o{ asset_tags
-asset_tags ||..o{ tags
+tagging_event ||..o{ asset
+asset ||..o{ tags
 @enduml

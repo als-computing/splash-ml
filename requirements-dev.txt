@@ -1,3 +1,4 @@
+flake8
 mongomock
-pymongo
 pytest
+pandas
