@@ -13,10 +13,15 @@ class Persistable(BaseModel):
     uid: Optional[str]
 
 
+class ModelInfo(BaseModel):
+    label_index: Optional[Dict[str, int]]
+
+
 class Tagger(Persistable):
     schema_version: str = SCHEMA_VERSION
     type: str
     name: Optional[str] = Field(description="optional name of model that produces tags")
+    model_info: Optional[ModelInfo]
 
     class Config:
         extra = Extra.forbid

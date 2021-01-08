@@ -141,5 +141,11 @@ new_tagging_event = TaggingEvent(**{
 
 new_tagger = Tagger(**{
     "type": "model",
-    "name": "PyTestNet"
+    "name": "PyTestNet",
+    "model_info": {
+        "label_index": {
+            "blue": 1,
+            "red": 2
+        }
+    }
 })

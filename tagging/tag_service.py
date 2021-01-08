@@ -236,6 +236,10 @@ class TagService():
             ('uid', 1)
         ], unique=True)
 
+        self._collection_taggers.create_index([
+            ('model_info.label_index', 1)
+        ], unique=True)
+
         self._collection_tagging_event.create_index([
             ('tagger_id', 1),
         ])
