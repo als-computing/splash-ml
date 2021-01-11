@@ -17,6 +17,7 @@ class ModelInfo(BaseModel):
     label_index: Optional[Dict[str, int]]
 
 
+
 class Tagger(Persistable):
     schema_version: str = SCHEMA_VERSION
     type: str
@@ -50,17 +51,22 @@ class AssetType(str, Enum):
     web = "web"
 
 
-class Asset(Persistable):
+class DatasetCollection:
+    assets: List[str]
+    models: Dict[str, int] # model and the quality of that model when run against a model
+
+
+class Dataset(Persistable):
     schema_version: str = SCHEMA_VERSION
     type: AssetType
     uri: str
     location_kwargs: Optional[Dict[str, str]]
     sample_id: Optional[str]
     tags: Optional[List[Tag]]
- 
+
     class Config:
         extra = Extra.forbid
 
 
-class FileAsset(Asset):
+class FileDataset(Dataset):
     type = AssetType.file
