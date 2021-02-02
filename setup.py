@@ -18,7 +18,7 @@ with open(path.join(here, 'requirements-webservice.txt')) as requirements_file:
                                if not line.startswith('#')]
 
 
-with open(path.join(here, 'requirements-example.txt')) as requirements_file:
+with open(path.join(here, 'requirements-examples.txt')) as requirements_file:
     # Parse requirements.txt, ignoring any commented-out lines.
     requirements_example = [line for line in requirements_file.read().splitlines()
                                if not line.startswith('#')]
