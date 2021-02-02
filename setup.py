@@ -32,13 +32,13 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.7',
     ],
     extras_require={
         "webservice": requirements_webservice
     },
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    python_requires='>=3.8',
+    python_requires='>=3.7',
     install_requires=requirements,
     entry_points={
         'console_scripts': [
