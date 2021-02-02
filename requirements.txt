@@ -3,3 +3,10 @@ graphene-pydantic
 pymongo
 pydantic
 uvicorn
+
+jupyterlab
+mongomock
+pandas
+requests
+tqdm
+dnspython
