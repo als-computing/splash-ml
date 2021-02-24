@@ -15,6 +15,8 @@ class AssetNotFound(Exception):
     pass
 
 
+
+
 class TagService():
     """The TagService provides access to the tagging database
     as well as an interface into databroker which has ingested
@@ -220,10 +222,6 @@ class TagService():
             yield Asset.parse_obj(item)
 
     def _create_indexes(self):
-        # Comment - Hey Dylan, correct me if im wrong, but if I make indexes
-        # for type, model, and create_time, I dont need to create one for each
-        # sepertaly, like the first create index with all 3 should cover even 1
-        # variable queries, right?
         self._collection_taggers.create_index([
             ('type', 1),
         ])
@@ -238,7 +236,7 @@ class TagService():
 
         self._collection_taggers.create_index([
             ('model_info.label_index', 1)
-        ], unique=True)
+        ])
 
         self._collection_tagging_event.create_index([
             ('tagger_id', 1),

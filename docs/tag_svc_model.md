@@ -26,15 +26,24 @@ The following ER Diagram is slighltly modified from traditional ER diagrams to a
         "sample_id": "house paint 1234",
         "tags": [
             {
-                "tag": "rods",
-                "confidence": 0.9008,
+                "name": "label",
+                "value": "rods",
+                "confidence": 0.900,
                 "event_id": "wwewere6002104rwerwe81ad229c33",
             },
             {
-                "tag": "peaks",
+                "name": "label",
+                "value": "peaks",
                 "confidence": 0.001, 
                 "event_id": "wwewere6002104rwerwe81ad229c33",
+            },
+             {
+                "name": "geometry",
+                "value": "GISAXS",
+                "confidence": 1.0, 
+                "event_id": "wwewere6002104rwerwe81ad229c33",
             }
+        ],
         ],
     }
 
