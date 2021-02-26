@@ -1,11 +1,12 @@
+from graphene.types.objecttype import ObjectType
 from tagging.tag_service import TagService
 import graphene
 from graphene_pydantic import PydanticInputObjectType, PydanticObjectType
 from .model import (
-    Asset,
+    Asset as AssetModel,
     LABEL_NAME,
-    Tag,
-    Tagger
+    Tag as TagModel,
+    Tagger as TaggerModel
 )
 
 
@@ -16,46 +17,51 @@ class QueryContext():
 context = QueryContext()
 
 
-class TaggerGrapheneInputModel(PydanticInputObjectType):
+class TaggerInput(PydanticInputObjectType):
     class Meta:
-        model = Tagger
+        model = TaggerModel
         exclude_fields = ("modelinfo",)
 
 
-class TaggerGrapheneModel(PydanticObjectType):
+class Tagger(PydanticObjectType):
     class Meta:
-        model = Tagger
+        model = TaggerModel
         exclude_fields = ("modelinfo",)
 
 
-class AssetGrapheneModel(PydanticObjectType):
+class Tag(PydanticObjectType):
 
     class Meta:
-        model = Asset
-        exclude_fields = ("location_kwargs", "tags")
+        model = TagModel
 
 
-class TagGrapheneModel(PydanticObjectType):
+class Asset(PydanticObjectType):
+    # tags = graphene.List(of_type=Tag)
 
-    class Meta:
-        model = Tag
-
-
-class TagGrapheneModel(PydanticObjectType):
+    # def resolve_tags(parent, info):
+    #     return graphene.List(parent)
 
     class Meta:
-        model = Tag
+        model = AssetModel
+        exclude_fields = ("location_kwargs")
+
+
+
+class Tag(PydanticObjectType):
+    
+    class Meta:
+        model = TagModel
 
 
 class CreateTagger(graphene.Mutation):
     class Arguments:
-        tagger_details = TaggerGrapheneInputModel()
+        tagger_details = TaggerInput()
 
-    Output = TaggerGrapheneModel
+    Output = Tagger
 
     @staticmethod
     def mutate(parent, info, tagger_details):
-        context.tag_svc.create_tagger(Tagger(**tagger_details))
+        context.tag_svc.create_tagger(TaggerModel(**tagger_details))
 
 
 class Mutation(graphene.ObjectType):
@@ -63,18 +69,18 @@ class Mutation(graphene.ObjectType):
 
 
 class Query(graphene.ObjectType):
-    list_taggers = graphene.List(TaggerGrapheneModel)
-    list_taggers_by_type = graphene.List(TaggerGrapheneModel, args={"type": graphene.String(), "name": graphene.String()})
-    list_assets_by_tag = graphene.List(AssetGrapheneModel, args={"label": graphene.String()})
+    list_taggers = graphene.List(Tagger)
+    list_taggers_by_type = graphene.List(Tagger, args={"type": graphene.String(), "name": graphene.String()})
+    list_assets_by_tag = graphene.List(Asset, args={"label": graphene.String()})
 
     @staticmethod
     def resolve_list_taggers(parent, info):
-        taggers = context.tag_svc.get_taggers()
+        taggers = context.tag_svc.find_taggers()
         return taggers
 
     @staticmethod
     def resolve_list_taggers_by_type(parent, info, type, name):
-        taggers = context.tag_svc.get_taggers(type=type)
+        taggers = context.tag_svc.find_taggers(type=type)
         return taggers
 
     @staticmethod

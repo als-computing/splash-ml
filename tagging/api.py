@@ -75,9 +75,14 @@ def add_asset(asset: Asset):
     return CreateResponseModel(new_asset.uid)
 
 
+@app.get('/api/v0/assets', tags=['assets'])
+def get_assets() -> List[Asset]:
+    return svc_context.tag_svc.find_assets()
+
+
 @app.post('/api/v0/assets/{uid}/tags', tags=['assets', 'tags'], response_model=CreateResponseModel)
 def add_tags(asset_id: str, tags: List[Tag]):
-    new_asset = svc_context.tag_svc.create_asset(tags, asset_id)
+    new_asset = svc_context.tag_svc.add_tags(tags, asset_id)
     return CreateResponseModel(new_asset.uid)
 
 
