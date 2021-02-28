@@ -14,12 +14,12 @@ class Persistable(BaseModel):
 
 
 class ModelInfo(BaseModel):
-    label_index: Optional[Dict[str, str]]
+    label_index: Optional[Dict[str, float]]
 
 
-class Tagger(Persistable):
+class TagSource(Persistable):
     schema_version: str = SCHEMA_VERSION
-    modelinfo: Optional[ModelInfo]
+    model_info: Optional[ModelInfo]
     type: str
     name: Optional[str] = Field(description="optional name of model that produces tags")
 
@@ -44,15 +44,15 @@ class Tag(BaseModel):
     event_id: Optional[str] = None
 
 
-class AssetType(str, Enum):
+class DatasetType(str, Enum):
     dbroker = "dbroker"
     file = "file"
     web = "web"
 
 
-class Asset(Persistable):
+class Dataset(Persistable):
     schema_version: str = SCHEMA_VERSION
-    type: AssetType
+    type: DatasetType
     uri: str
     location_kwargs: Optional[Dict[str, str]]
     sample_id: Optional[str]
@@ -62,5 +62,5 @@ class Asset(Persistable):
         extra = Extra.forbid
 
 
-class FileAsset(Asset):
-    type = AssetType.file
+class FileDataset(Dataset):
+    type = DatasetType.file

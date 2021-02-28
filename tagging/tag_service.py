@@ -4,14 +4,14 @@ import uuid
 from pymongo.mongo_client import MongoClient
 
 from .model import (
-    Asset,
+    Dataset,
     Tag,
-    Tagger,
+    TagSource,
     TaggingEvent
 )
 
 
-class AssetNotFound(Exception):
+class DatasetNotFound(Exception):
     pass
 
 
@@ -24,7 +24,7 @@ class TagService():
 
     Usage looks something like:
     tag_svc = TagService(pymongo_client)
-    tag_svc.create_tagger(tagger)
+    tag_svc.create_tag_source(tagger)
     """
 
     def __init__(self, client, db_name=None):
@@ -52,31 +52,31 @@ class TagService():
         if db_name is None:
             db_name = 'tagging'
         self._db = client[db_name]
-        self._collection_taggers = self._db.tagger
+        self._collection_tag_sources = self._db.tag_source
         self._collection_tagging_event = self._db.tagging_event
-        self._collection_asset = self._db.asset
+        self._collection_dataset = self._db.data_set
         self._create_indexes()
 
-    def create_tagger(self, tagger: Tagger) -> Tagger:
+    def create_tag_source(self, tag_source: TagSource) -> TagSource:
         """
         Create a new tagger data set. The uid from this tagger will act like a
         session for all create tagging_events in create_tagging_event
         Parameters
         ----------
-        tagger : NewTagger
+        tagger : NewTagSource
 
 
         Returns
         ----------
-        Tagger
+        TagSource
             uid for this tagger, which can be added for all Tagging events
         """
-        tagger_dict = tagger.dict()
+        tagger_dict = tag_source.dict()
         self._inject_uid(tagger_dict)
         # tagger_dict['schema_version'] = self.SCHEMA_VERSION
-        self._collection_taggers.insert_one(tagger_dict)
+        self._collection_tag_sources.insert_one(tagger_dict)
         self._clean_mongo_ids(tagger_dict)
-        return Tagger(**tagger_dict)
+        return TagSource(**tagger_dict)
 
     def create_tagging_event(self, event: TaggingEvent) -> TaggingEvent:
         """ Create a new tagging_event data set.  The uid for this tag event will label
@@ -104,27 +104,27 @@ class TagService():
         self._clean_mongo_ids(t_e_dict)
         return TaggingEvent.parse_obj(t_e_dict)
 
-    def create_asset(self, asset: Asset) -> Asset:
+    def create_dataset(self, asset: Dataset) -> Dataset:
         """ Create a new asset_tags data set.  The uid for this asset tag set
         distinguishes it from others and can be used to find it later.
 
         Parameters
         ----------
-        asset_tags : NewAsset
+        asset_tags : NewDataset
 
         Returns
         ----------
-        Asset
-            Asset object, with uid in it
+        Dataset
+            Dataset object, with uid in it
         """
         asset_dict = asset.dict()
         self._inject_uid(asset_dict)
         # asset_dict['schema_version'] = self.SCHEMA_VERSION
-        self._collection_asset.insert_one(asset_dict)
+        self._collection_dataset.insert_one(asset_dict)
         self._clean_mongo_ids(asset_dict)
-        return Asset(**asset_dict)
+        return Dataset(**asset_dict)
 
-    def add_tags(self, tags: List[Tag], asset_uid: str) -> Asset:
+    def add_tags(self, tags: List[Tag], asset_uid: str) -> Dataset:
         """ Add new asset tags to an existing asset_tags data set
         with the given uid.
         Parameters
@@ -137,28 +137,28 @@ class TagService():
 
         Returns
         ----------
-        Asset
+        Dataset
             The updated tag set (full asset tag object)
         """
 
-        doc_tags = self._collection_asset.find_one({'uid': asset_uid})
+        doc_tags = self._collection_dataset.find_one({'uid': asset_uid})
         if not doc_tags:
-            raise AssetNotFound(f"no asset with id: {asset_uid}")
+            raise DatasetNotFound(f"no asset with id: {asset_uid}")
 
         for tag in tags:
             doc_tags['tags'].append(tag.dict())
 
         # Takes a asset tag uid key to find one to change and then passes in
         # new tag array
-        self._collection_asset.update_one(
+        self._collection_dataset.update_one(
                 {'uid': asset_uid},
                 {'$set': {'tags': doc_tags['tags']}})
 
         # doc_tags = self._collection_asset.find_one({'uid': asset_uid})
         self._clean_mongo_ids(doc_tags)
-        return Asset.parse_obj(doc_tags)
+        return Dataset.parse_obj(doc_tags)
 
-    def find_taggers(self, **search_filters) -> Iterator[Tagger]:
+    def find_tag_sources(self, **search_filters) -> Iterator[TagSource]:
         """ Searches database for tags using the search_filters as query terms.
 
         Parameters
@@ -168,7 +168,7 @@ class TagService():
 
         Yields
         -------
-        Iterator[Tagger]
+        Iterator[TagSource]
             [description]
         """
         subqueries = []
@@ -177,16 +177,16 @@ class TagService():
             subqueries.append({k: v})
         if len(subqueries) > 0:
             query = {"$and": subqueries}
-        for tagger in self._collection_taggers.find(query):
+        for tagger in self._collection_tag_sources.find(query):
             self._clean_mongo_ids(tagger)
-            yield Tagger.parse_obj(tagger)
+            yield TagSource.parse_obj(tagger)
 
-    def retrieve_asset(self, uid) -> Asset:
+    def retrieve_dataset(self, uid) -> Dataset:
         """Find a single asset set with the provided-uid
 
         Parameters
         ----------
-        uid : str
+        uid : strrrrrrrrrr
             uid of the tagset to return
 
         Returns
@@ -194,11 +194,11 @@ class TagService():
         dict
             asset set dictionary corresponding to the uid
         """
-        doc_tags = self._collection_asset.find_one({'uid': uid})
+        doc_tags = self._collection_dataset.find_one({'uid': uid})
         self._clean_mongo_ids(doc_tags)
-        return Asset(**doc_tags)
+        return Dataset(**doc_tags)
 
-    def find_assets(self,  **search_filters) -> Iterator[Asset]:
+    def find_datasets(self, skip=0, limit=10, **search_filters) -> Iterator[Dataset]:
         """Find all TagSets matching search filters
 
         Parameters
@@ -213,28 +213,29 @@ class TagService():
         subqueries = []
         query = {}
         for k, v in search_filters.items():
-            subqueries.append({k: v})
+            if v is not None:
+                subqueries.append({k: v})
         if len(subqueries) > 0:
             query = {"$and": subqueries}
-        cursor = self._collection_asset.find(query)
+        cursor = self._collection_dataset.find(query)
         for item in cursor:
             self._clean_mongo_ids(item)
-            yield Asset.parse_obj(item)
+            yield Dataset.parse_obj(item)
 
     def _create_indexes(self):
-        self._collection_taggers.create_index([
+        self._collection_tag_sources.create_index([
             ('type', 1),
         ])
 
-        self._collection_taggers.create_index([
+        self._collection_tag_sources.create_index([
             ('name', 1),
         ]),
 
-        self._collection_taggers.create_index([
+        self._collection_tag_sources.create_index([
             ('uid', 1)
         ], unique=True)
 
-        self._collection_taggers.create_index([
+        self._collection_tag_sources.create_index([
             ('model_info.label_index', 1)
         ])
 
@@ -246,23 +247,23 @@ class TagService():
             ('uid', 1)
         ], unique=True)
 
-        self._collection_asset.create_index([
+        self._collection_dataset.create_index([
             ("$**", "text"),
         ]),
 
-        self._collection_asset.create_index([
+        self._collection_dataset.create_index([
             ('tags.name', 1),
         ]),
 
-        self._collection_asset.create_index([
+        self._collection_dataset.create_index([
             ('tags.value', 1),
         ])
 
-        self._collection_asset.create_index([
+        self._collection_dataset.create_index([
             ('tags.confidence', 1),
         ]),
 
-        self._collection_asset.create_index([
+        self._collection_dataset.create_index([
             ('uid', 1)
         ], unique=True)
 

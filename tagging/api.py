@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 import graphene
 
 from fastapi import FastAPI
@@ -15,9 +15,9 @@ from .query import (
 
 
 from .model import (
-    Asset,
+    Dataset,
     Tag,
-    Tagger,
+    TagSource,
     TaggingEvent
 )
 
@@ -41,6 +41,8 @@ MONGO_DB_URI = config("MONGO_DB_URI", cast=str, default="mongodb://localhost:270
 SPLASH_DB_NAME = config("SPLASH_DB_NAME", cast=str, default="splash")
 SPLASH_LOG_LEVEL = config("SPLASH_LOG_LEVEL", cast=str, default="INFO")
 
+API_URL_PREFIX = "/api/v0"
+
 init_logging()
 
 app = FastAPI(    
@@ -62,37 +64,52 @@ async def startup_event():
     query_context.tag_svc = tag_svc
 
 
-app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query))) # , mutation=Mutation)))
+app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , mutation=Mutation)))
 
 
 class CreateResponseModel(BaseModel):
-    id: str
+    uid: str
 
 
-@app.post('/api/v0/assets', tags=['assets'], response_model=CreateResponseModel)
-def add_asset(asset: Asset):
-    new_asset = svc_context.tag_svc.create_asset(asset)
-    return CreateResponseModel(new_asset.uid)
+@app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
+def add_dataset(asset: Dataset):
+    new_asset = svc_context.tag_svc.create_dataset(asset)
+    return CreateResponseModel(uid=new_asset.uid)
 
 
-@app.get('/api/v0/assets', tags=['assets'])
-def get_assets() -> List[Asset]:
-    return svc_context.tag_svc.find_assets()
+@app.get(API_URL_PREFIX + '/datasets', tags=['datasets'])
+def get_datasets(
+    name: Optional[str] = None,
+    uri: Optional[str] = None,
+    tag_value: Optional[str] = None,
+    skip: Optional[int] = 0,
+    limit: Optional[int] = 10
+
+) -> List[Dataset]:
+    # turning tag_value into tags.value as we do below feels too kludgy
+    return svc_context.tag_svc.find_datasets(skip, limit, name=name, uri=uri, **{"tags.value": tag_value})
 
 
-@app.post('/api/v0/assets/{uid}/tags', tags=['assets', 'tags'], response_model=CreateResponseModel)
-def add_tags(asset_id: str, tags: List[Tag]):
-    new_asset = svc_context.tag_svc.add_tags(tags, asset_id)
-    return CreateResponseModel(new_asset.uid)
+@app.post(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateResponseModel)
+def add_tags(uid: str, tags: List[Tag]):
+    new_asset = svc_context.tag_svc.add_tags(tags, uid)
+    return CreateResponseModel(uid=new_asset.uid)
 
 
-@app.post('/api/v0/taggers', tags=['taggers'], response_model=CreateResponseModel)
-def add_tagger(asset: Tagger):
-    new_tagger = svc_context.tag_svc.create_tagger(asset)
-    return CreateResponseModel(new_tagger.uid)
+@app.post(API_URL_PREFIX + '/tagsources', tags=['tag sources'], response_model=CreateResponseModel)
+def add_tag_source(asset: TagSource):
+    new_tagger = svc_context.tag_svc.create_tag_source(asset)
+    return CreateResponseModel(uid=new_tagger.uid)
 
 
-@app.post('/api/v0/events', tags=['events'], response_model=CreateResponseModel)
+@app.get(API_URL_PREFIX + '/tagsources', tags=['tag sources'], response_model=List[TagSource])
+def get_tag_sources():
+    tag_sources = svc_context.tag_svc.find_tag_sources()
+    return tag_sources
+
+
+
+@app.post(API_URL_PREFIX + '/events', tags=['events'], response_model=CreateResponseModel)
 def add_event(event: TaggingEvent):
     new_event = svc_context.tag_svc.create_event(event)
     return CreateResponseModel(new_event.uid)
