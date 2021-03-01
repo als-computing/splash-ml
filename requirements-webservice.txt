@@ -1,1 +1,3 @@
 fastapi
+graphene==2.1.6
+graphene-pydantic==0.1.0

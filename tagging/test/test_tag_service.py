@@ -7,10 +7,10 @@ from ..tag_service import TagService
 from ..model import (
     LABEL_NAME,
     SCHEMA_VERSION,
-    Asset,
-    AssetType,
+    Dataset,
+    DatasetType,
     Tag,
-    Tagger,
+    TagSource,
     TaggingEvent
 )
 
@@ -31,16 +31,16 @@ def tag_svc(mongodb):
 
 
 def test_unique_uid_tag_set(tag_svc: TagService):
-    tagger = tag_svc.create_tagger(new_tagger)
+    tagger = tag_svc.create_tag_source(new_tagger)
     new_tagging_event.tagger_id = tagger.uid
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
-    asset = tag_svc.create_asset(new_asset)
+    asset = tag_svc.create_dataset(new_asset)
     with pytest.raises(DuplicateKeyError):
-        another_tagger = Tagger(**
+        another_tagger = TagSource(**
                 {"uid": tagger.uid,
                  "type": "model",
                  "name": "netty"})
-        tag_svc.create_tagger(another_tagger)
+        tag_svc.create_tag_source(another_tagger)
            
     with pytest.raises(DuplicateKeyError):
         another_event = TaggingEvent(**
@@ -51,22 +51,22 @@ def test_unique_uid_tag_set(tag_svc: TagService):
         tag_svc.create_tagging_event(another_event)
 
     with pytest.raises(DuplicateKeyError):
-        another_asset = Asset(**{
+        another_asset = Dataset(**{
             "uid": asset.uid,
             "type": "file",
             "uri": "bar"})
-        tag_svc.create_asset(another_asset)
+        tag_svc.create_dataset(another_asset)
 
 
 def test_create_and_find_tagger(tag_svc: TagService):
-    tagger = tag_svc.create_tagger(new_tagger)
+    tagger = tag_svc.create_tag_source(new_tagger)
     assert tagger is not None
-    return_taggers = tag_svc.find_taggers(name="PyTestNet")
+    return_taggers = tag_svc.find_tag_sources(name="PyTestNet")
     assert list(return_taggers)[0].name == "PyTestNet"
 
 
 def test_create_and_find_tagging_event(tag_svc: TagService):
-    tagger = tag_svc.create_tagger(new_tagger)
+    tagger = tag_svc.create_tag_source(new_tagger)
     tagging_event = tag_svc.create_tagging_event(TaggingEvent(tagger_id=tagger.uid, run_time=datetime.datetime.now()))
 
     return_tagging_event = tag_svc.retrieve_tagging_event(tagging_event.uid)
@@ -75,10 +75,10 @@ def test_create_and_find_tagging_event(tag_svc: TagService):
 
 
 def test_create_and_find_asset(tag_svc: TagService):
-    tagger = tag_svc.create_tagger(new_tagger)
+    tagger = tag_svc.create_tag_source(new_tagger)
     new_tagging_event.tagger_id = tagger.uid
-    asset = tag_svc.create_asset(new_asset)
-    return_asset = tag_svc.retrieve_asset(asset.uid)
+    asset = tag_svc.create_dataset(new_asset)
+    return_asset = tag_svc.retrieve_dataset(asset.uid)
 
     assert return_asset.schema_version == SCHEMA_VERSION
 
@@ -86,12 +86,12 @@ def test_create_and_find_asset(tag_svc: TagService):
         if tag.name == "geometry":
             assert tag.event_id == "import_id1"
 
-    returns_asset_from_search = list(tag_svc.find_assets(**{"tags.value": "rods"}))[0]
+    returns_asset_from_search = list(tag_svc.find_datasets(**{"tags.value": "rods"}))[0]
     assert return_asset == returns_asset_from_search, "Search and retrieve return same"
 
 
 def test_add_asset_tags(tag_svc: TagService):
-    asset = tag_svc.create_asset(new_asset)
+    asset = tag_svc.create_dataset(new_asset)
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
     new_tag = Tag(**{
             "name": LABEL_NAME,
@@ -104,9 +104,9 @@ def test_add_asset_tags(tag_svc: TagService):
     assert len(return_asset_set.tags) == 4
 
 
-new_asset = Asset(**{
+new_asset = Dataset(**{
     "sample_id": "house paint 1234",
-    "type": AssetType.file,
+    "type": DatasetType.file,
     "uri": "images/test.tiff",
     "tags": [
         {
@@ -139,7 +139,7 @@ new_tagging_event = TaggingEvent(**{
 })
 
 
-new_tagger = Tagger(**{
+new_tagger = TagSource(**{
     "type": "model",
     "name": "PyTestNet",
     "model_info": {
