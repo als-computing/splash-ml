@@ -20,7 +20,7 @@ context = QueryContext()
 class TagSourceInput(PydanticInputObjectType):
     class Meta:
         model = TagSourceModel
-        exclude_fields = ("modelinfo",)
+        exclude_fields = ("model_info",)
 
 
 class TagSource(PydanticObjectType):
