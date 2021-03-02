@@ -40,7 +40,7 @@ To run the web service:
 ## Running Web Service
 The simplest command for running the WebService is:
 
-  $ 
+  $ uvicorn tagging.api:app 
 
 
 ### 
