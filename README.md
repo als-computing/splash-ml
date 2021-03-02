@@ -22,25 +22,25 @@ There is a sample notebook that demostrates interacting with the TagService dire
 
 Setup a python environment. We'll use venv for this example and install from source:
 
-  $ git clone https://github.com/als-computing/splash-ml.git
-  $ cd splash-ml
-  $ python -m venv env
-  $ source env/bin/activate
-  $ pip install -r requirements.txt
+    $ git clone https://github.com/als-computing/splash-ml.git
+    $ cd splash-ml
+    $ python -m venv env
+    $ source env/bin/activate
+    $ pip install -r requirements.txt
 
 If you want to run the jupyter example in the /examples directory:
   
-  $ pip install -r requirements-examples.txt
+    $ pip install -r requirements-examples.txt
 
 To run the web service:
   
-  $  pip install -r requirements-webservice.txt
+    $  pip install -r requirements-webservice.txt
 
 
 ## Running Web Service
 The simplest command for running the WebService is:
 
-  $ uvicorn tagging.api:app 
+    $ uvicorn tagging.api:app 
 
 
 ### 
