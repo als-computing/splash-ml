@@ -42,6 +42,11 @@ The simplest command for running the WebService is:
 
     $ uvicorn tagging.api:app 
 
+By default, the service will startup look for mongo at `mongodb://localhost:27107/tagging`
+You can change this by setting an environment variable `MONGO_DB_URI`, pointing to the 
+server and database of choice. This is probably how you would configure mongo in a container
+environment.
+
 
 ### 
 # Copyright
