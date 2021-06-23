@@ -32,14 +32,15 @@ entity asset{
 
 }
 
-entity tags <<sub-document>> {
-    * tag 
-    * confidence
+entity tag <<sub-document>> {
+    name
+    value 
+    confidence
     * event_id
 }
 
 
 tagger ||..o{ tagging_event
 tagging_event ||..o{ asset
-asset ||..o{ tags
+asset ||..o{ tag
 @enduml

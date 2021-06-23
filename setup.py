@@ -17,6 +17,11 @@ with open(path.join(here, 'requirements-webservice.txt')) as requirements_file:
     requirements_webservice = [line for line in requirements_file.read().splitlines()
                                if not line.startswith('#')]
 
+
+with open(path.join(here, 'requirements-examples.txt')) as requirements_file:
+    # Parse requirements.txt, ignoring any commented-out lines.
+    requirements_example = [line for line in requirements_file.read().splitlines()
+                            if not line.startswith('#')]
 setup(
 
     name='splash-ml',  
@@ -32,13 +37,14 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.7',
     ],
     extras_require={
-        "webservice": requirements_webservice
+        "webservice": requirements_webservice,
+        "examples": requirements_example
     },
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    python_requires='>=3.8',
+    python_requires='>=3.7',
     install_requires=requirements,
     entry_points={
         'console_scripts': [

@@ -1,4 +1,4 @@
 flake8
 mongomock
 pytest
-pandas
+requests
