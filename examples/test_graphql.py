@@ -39,8 +39,8 @@ class Query(graphene.ObjectType):
         return [PersonModel(id=uuid.uuid4(), first_name="Beth", last_name="Smith")]
 
 
-schema = graphene.Schema(query=Query)
-pprint(schema.graphql_schema)
+# schema = graphene.Schema(query=Query)
+# pprint(schema.graphql_schema)
 # query = """
 #     query {
 #       people {
