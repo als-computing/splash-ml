@@ -221,6 +221,9 @@ class TagService():
         if len(subqueries) > 0:
             query = {"$and": subqueries}
         cursor = self._collection_dataset.find(query)
+        # This [skip:limit] will be inefficient the query is massive and you
+        # only want 50 of the results.  For a temp fix this works, but
+        # shouldn't be the permanent solution.
         for item in cursor[skip:limit]:
             self._clean_mongo_ids(item)
             yield Dataset.parse_obj(item)
