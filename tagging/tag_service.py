@@ -221,7 +221,7 @@ class TagService():
         if len(subqueries) > 0:
             query = {"$and": subqueries}
         cursor = self._collection_dataset.find(query)
-        for item in cursor:
+        for item in cursor[skip:limit]:
             self._clean_mongo_ids(item)
             yield Dataset.parse_obj(item)
 
