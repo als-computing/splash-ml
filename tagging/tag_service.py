@@ -145,6 +145,9 @@ class TagService():
         if not doc_tags:
             raise DatasetNotFound(f"no asset with id: {asset_uid}")
 
+        if not doc_tags.get('tags'):
+            doc_tags['tags'] = []
+
         for tag in tags:
             doc_tags['tags'].append(tag.dict())
 

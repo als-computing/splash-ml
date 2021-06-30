@@ -104,6 +104,14 @@ def test_add_asset_tags(tag_svc: TagService):
     assert len(return_asset_set.tags) == 4
 
 
+def test_add_none_tags(tag_svc: TagService):
+    asset = tag_svc.create_dataset(no_tag_asset)
+    new_tag = no_tag
+    return_asset_set = tag_svc.add_tags([new_tag], asset.uid)
+
+    assert return_asset_set.tags[0].value == 'rod'
+
+
 new_asset = Dataset(**{
     "sample_id": "house paint 1234",
     "type": DatasetType.file,
@@ -148,4 +156,15 @@ new_tagger = TagSource(**{
             "red": 2
         }
     }
+})
+
+no_tag_asset = Dataset(**{
+    "type": "file",
+    "uri": "blahblahblah"
+})
+
+no_tag = Tag(**{
+    "name": "label",
+    "value": "rod",
+    "tags": None
 })

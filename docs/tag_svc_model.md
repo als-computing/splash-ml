@@ -55,8 +55,14 @@ The following ER Diagram is slighltly modified from traditional ER diagrams to a
     }
 
     tagger = {
-        "type: "model | humam",
+        "type: "model",
         "model_name": "PyTestNet",
         "uid": "dsfosf9080s9uflkwsnerl3k4j",
-        "create_time": 11112333.3  
+        "create_time": 11112333.3,
+        "model_info": {
+            "label_index": {
+                "blue": 1,
+                "red": 2
+            }
+        }
     }

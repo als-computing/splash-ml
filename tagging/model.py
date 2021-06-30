@@ -17,7 +17,9 @@ class ModelInfo(BaseModel):
     label_index: Optional[Dict[str, float]]
 
 
+      
 class TagSource(Persistable):
+
     schema_version: str = SCHEMA_VERSION
     model_info: Optional[ModelInfo]
     type: str
@@ -50,6 +52,11 @@ class DatasetType(str, Enum):
     web = "web"
 
 
+
+    assets: List[str]
+    models: Dict[str, int] # model and the quality of that model when run against a model
+
+
 class Dataset(Persistable):
     schema_version: str = SCHEMA_VERSION
     type: DatasetType
@@ -64,3 +71,4 @@ class Dataset(Persistable):
 
 class FileDataset(Dataset):
     type = DatasetType.file
+

@@ -22,25 +22,30 @@ There is a sample notebook that demostrates interacting with the TagService dire
 
 Setup a python environment. We'll use venv for this example and install from source:
 
-  $ git clone https://github.com/als-computing/splash-ml.git
-  $ cd splash-ml
-  $ python -m venv env
-  $ source env/bin/activate
-  $ pip install -r requirements.txt
+    $ git clone https://github.com/als-computing/splash-ml.git
+    $ cd splash-ml
+    $ python -m venv env
+    $ source env/bin/activate
+    $ pip install -r requirements.txt
 
 If you want to run the jupyter example in the /examples directory:
   
-  $ pip install -r requirements-examples.txt
+    $ pip install -r requirements-examples.txt
 
 To run the web service:
   
-  $  pip install -r requirements-webservice.txt
+    $  pip install -r requirements-webservice.txt
 
 
 ## Running Web Service
 The simplest command for running the WebService is:
 
-  $ 
+    $ uvicorn tagging.api:app 
+
+By default, the service will startup look for mongo at `mongodb://localhost:27107/tagging`
+You can change this by setting an environment variable `MONGO_DB_URI`, pointing to the 
+server and database of choice. This is probably how you would configure mongo in a container
+environment.
 
 
 ### 
