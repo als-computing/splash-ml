@@ -68,6 +68,22 @@ def test_tags_and_assets(rest_client: TestClient):
     assert len(tag_sources) == 1
 
 
+def test_skip_limit(rest_client: TestClient):
+    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
+    assert response.status_code == 200
+
+    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset2)
+    assert response.status_code == 200
+
+    response: Dataset = rest_client.get(
+        API_URL_PREFIX + "/datasets",
+        params={"skip": 1, "limit": 1})
+    assert response.status_code == 200, f"oops {response.text}"
+    source = response.json()
+    assert len(source) == 1
+
+
+
 tag_source_1_dict = {
     "type": "model",
     "name": "deep thought",
@@ -90,4 +106,9 @@ dataset = {
     "tags": [
         {"name": "label", "value": "rods", "confidence": 0.9}
     ]
+}
+
+dataset2 = {
+    "type": "file",
+    "uri": "/foo/doi.h2",
 }
