@@ -272,10 +272,6 @@ class TagService():
         ]),
 
         self._collection_dataset.create_index([
-            ('tags.value', 1),
-        ])
-
-        self._collection_dataset.create_index([
             ('tags.confidence', 1),
         ]),
 
