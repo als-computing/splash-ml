@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional
 import graphene
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query as FastQuery, HTTPException
 from pydantic import BaseModel
 from starlette.graphql import GraphQLApp
 from starlette.config import Config
@@ -25,6 +25,8 @@ from .tag_service import TagService, Context
 
 logger = logging.getLogger('splash_ml')
 
+
+DEFAULT_PAGE_SIZE = 20
 
 def init_logging():
     ch = logging.StreamHandler()
@@ -79,22 +81,39 @@ def add_dataset(asset: Dataset):
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'])
 def get_datasets(
-    name: Optional[str] = None,
     uri: Optional[str] = None,
-    tag_value: Optional[str] = None,
-    skip: Optional[int] = 0,
-    limit: Optional[int] = 10
+    tags: Optional[List[str]] = FastQuery(None),
+    offset: Optional[int] = FastQuery(0, alias="page[offset]"),
+    limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
 
 ) -> List[Dataset]:
-    # turning tag_value into tags.value as we do below feels too kludgy
-    return svc_context.tag_svc.find_datasets(skip, limit, name=name, uri=uri, **{"tags.value": tag_value})
 
 
-@app.post(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateResponseModel)
+    """ Searches datasets based on query parameters. Provides pagine through skip and limit
+
+    Args:
+        uri (Optional[str], optional): find dataset based on uri. Defaults to None.
+        tags(Optional[List[str]], optional): lsit of tags to search for. Defaults to none.
+        skip (Optional[int], optional): [description]. Defaults to 0.
+        limit (Optional[int], optional): [description]. Defaults to 10.
+
+    Returns:
+        List[Dataset]: [Full object datasets corresponding to search prarmeters]
+    """
+    return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
+
+
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateResponseModel)
 def add_tags(uid: str, tags: List[Tag]):
     new_asset = svc_context.tag_svc.add_tags(tags, uid)
     return CreateResponseModel(uid=new_asset.uid)
 
+
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/metadata', tags=['datasets', 'metadata'], response_model=CreateResponseModel)
+def add_tags(uid: str, tags: List[Tag]):
+    raise HTTPException(405, detail="support for patching metadata is future")
+    # new_asset = svc_context.tag_svc.add_metadata(tags, uid)
+    # return CreateResponseModel(uid=new_asset.uid)
 
 @app.post(API_URL_PREFIX + '/tagsources', tags=['tag sources'], response_model=CreateResponseModel)
 def add_tag_source(asset: TagSource):

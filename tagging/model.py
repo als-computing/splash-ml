@@ -3,10 +3,8 @@ from enum import Enum
 from pydantic import BaseModel, Extra, Field
 from typing import Dict, List, Optional
 
-LABEL_NAME = "label"
-
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 
 
 class Persistable(BaseModel):
@@ -40,10 +38,11 @@ class TaggingEvent(Persistable):
 
 
 class Tag(BaseModel):
-    name: str
-    value: str
-    confidence: Optional[float]
-    event_id: Optional[str] = None
+    name: str = Field(description="name of the tag")
+    locator: Optional[str] = Field(description="optional location information, " \
+                            "for indicating a part of a dataset that this tag applies to")
+    confidence: Optional[float] = Field(description="confidence provided for this tag")
+    event_id: Optional[str] = Field(description="id of event where this tag was created")
 
 
 class DatasetType(str, Enum):
@@ -52,7 +51,7 @@ class DatasetType(str, Enum):
     web = "web"
 
 
-
+class DatasetCollection(Persistable):
     assets: List[str]
     models: Dict[str, int] # model and the quality of that model when run against a model
 

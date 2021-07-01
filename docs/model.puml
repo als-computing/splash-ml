@@ -7,14 +7,15 @@ skinparam linetype ortho
 
 left to right direction
 
-entity tagger{
+entity TagSource{
     * **uid**
     __
     type
     name
+    model_info
 }
 
-entity tagging_event{
+entity TaggingEvent{
     * **uid**
     __
     * taggerl_id
@@ -22,7 +23,7 @@ entity tagging_event{
     accuracy
 }
 
-entity asset{
+entity Dataset{
     * **uid**
     ___
     * event_id
@@ -32,7 +33,7 @@ entity asset{
 
 }
 
-entity tag <<sub-document>> {
+entity Tag <<sub-document>> {
     name
     value 
     confidence
@@ -40,7 +41,7 @@ entity tag <<sub-document>> {
 }
 
 
-tagger ||..o{ tagging_event
-tagging_event ||..o{ asset
-asset ||..o{ tag
+TagSource ||..o{ TaggingEvent
+TaggingEvent ||..o{ Dataset
+Dataset ||..o{ Tag
 @enduml
