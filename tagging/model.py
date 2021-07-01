@@ -4,7 +4,7 @@ from pydantic import BaseModel, Extra, Field
 from typing import Dict, List, Optional
 
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 
 
 class Persistable(BaseModel):
