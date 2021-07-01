@@ -3,8 +3,6 @@ from enum import Enum
 from pydantic import BaseModel, Extra, Field
 from typing import Dict, List, Optional
 
-LABEL_NAME = "label"
-
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
 SCHEMA_VERSION = "1.0"
 
