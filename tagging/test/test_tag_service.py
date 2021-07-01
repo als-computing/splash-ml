@@ -5,7 +5,6 @@ from pymongo.errors import DuplicateKeyError
 import mongomock
 from ..tag_service import TagService
 from ..model import (
-    LABEL_NAME,
     SCHEMA_VERSION,
     Dataset,
     DatasetType,
@@ -95,8 +94,7 @@ def test_add_asset_tags(tag_svc: TagService):
     asset = tag_svc.create_dataset(new_asset)
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
     new_tag = Tag(**{
-            "name": LABEL_NAME,
-            "value": "add1",
+            "name": "add1",
             "confidence": 0.50,
             "event_id": tagging_event.uid,
     })

@@ -9,7 +9,6 @@ from ..api import (
 
 from ..model import (
     Dataset,
-    LABEL_NAME,
     Tag,
     TagSource
 )
@@ -53,7 +52,7 @@ def test_tags_and_assets(rest_client: TestClient):
     assert len(tag_sources) == 1
 
     # add a new tag
-    new_tag = Tag(name=LABEL_NAME, value="peaks", confidence=0.1)
+    new_tag = Tag(name="peaks", confidence=0.1)
     response = rest_client.patch(
         f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
         json=[new_tag.dict()])
