@@ -47,14 +47,14 @@ def test_tags_and_assets(rest_client: TestClient):
     # search on name
     response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
-        params={"skip": 0, "limit": 10, "type": "file", "uri": "/foo/bar.h5"})
+        params={"offset": 0, "limit": 10, "type": "file", "uri": "/foo/bar.h5"})
     assert response.status_code == 200, f"oops {response.text}"
     tag_sources = response.json()
     assert len(tag_sources) == 1
 
     # add a new tag
     new_tag = Tag(name=LABEL_NAME, value="peaks", confidence=0.1)
-    response = rest_client.post(
+    response = rest_client.patch(
         f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
         json=[new_tag.dict()])
     assert response.status_code == 200, f"oops {response.text}"
@@ -68,6 +68,15 @@ def test_tags_and_assets(rest_client: TestClient):
     assert len(tag_sources) == 1
 
 
+# def test_add_metadata(rest_client: TestClient):
+#     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
+#     assert response.status_code == 200
+#     new_uid = response.json()['uid']
+
+#     response = rest_client.patch()
+
+
+
 def test_skip_limit(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
@@ -77,7 +86,7 @@ def test_skip_limit(rest_client: TestClient):
 
     response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
-        params={"skip": 1, "limit": 1})
+        params={"page[offset]": 1, "page[limit]": 1})
     assert response.status_code == 200, f"oops {response.text}"
     source = response.json()
     assert len(source) == 1

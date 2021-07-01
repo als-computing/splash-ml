@@ -201,7 +201,14 @@ class TagService():
         self._clean_mongo_ids(doc_tags)
         return Dataset(**doc_tags)
 
-    def find_datasets(self, skip=0, limit=10, **search_filters) -> Iterator[Dataset]:
+    def find_datasets(
+        self, 
+        uri: str=None,
+        tags: List[str]=None,
+        offset=0, 
+        limit=10, 
+        ) -> Iterator[Dataset]:
+        # **search_filters) -> Iterator[Dataset]:
         """Find all TagSets matching search filters
 
         Parameters
@@ -215,12 +222,18 @@ class TagService():
         """
         subqueries = []
         query = {}
-        for k, v in search_filters.items():
-            if v is not None:
-                subqueries.append({k: v})
+        if tags:
+            subqueries.append(
+                {"tags.name": {"$in": tags}})
+
+        if uri:
+            subqueries.append(
+                {"uri": uri}
+            )
+
         if len(subqueries) > 0:
             query = {"$and": subqueries}
-        cursor = self._collection_dataset.find(query).skip(skip).limit(limit)
+        cursor = self._collection_dataset.find(query).skip(offset).limit(limit)
         for item in cursor:
             self._clean_mongo_ids(item)
             yield Dataset.parse_obj(item)

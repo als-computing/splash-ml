@@ -40,10 +40,11 @@ class TaggingEvent(Persistable):
 
 
 class Tag(BaseModel):
-    name: str
-    value: str
-    confidence: Optional[float]
-    event_id: Optional[str] = None
+    name: str = Field(description="name of the tag")
+    locator: Optional[str] = Field(description="optional location information, " \
+                            "for indicating a part of a dataset that this tag applies to")
+    confidence: Optional[float] = Field(description="confidence provided for this tag")
+    event_id: Optional[str] = Field(description="id of event where this tag was created")
 
 
 class DatasetType(str, Enum):
