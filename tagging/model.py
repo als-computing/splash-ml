@@ -52,7 +52,7 @@ class DatasetType(str, Enum):
     web = "web"
 
 
-
+class DatasetCollection(Persistable):
     assets: List[str]
     models: Dict[str, int] # model and the quality of that model when run against a model
 
