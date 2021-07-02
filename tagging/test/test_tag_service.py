@@ -5,7 +5,6 @@ from pymongo.errors import DuplicateKeyError
 import mongomock
 from ..tag_service import TagService
 from ..model import (
-    LABEL_NAME,
     SCHEMA_VERSION,
     Dataset,
     DatasetType,
@@ -86,16 +85,16 @@ def test_create_and_find_asset(tag_svc: TagService):
         if tag.name == "geometry":
             assert tag.event_id == "import_id1"
 
-    returns_asset_from_search = list(tag_svc.find_datasets(**{"tags.value": "rods"}))[0]
-    assert return_asset == returns_asset_from_search, "Search and retrieve return same"
+    returns_asset_from_search = list(tag_svc.find_datasets(tags=["rods"]))
+    assert len(returns_asset_from_search) == 1
+    assert return_asset == returns_asset_from_search[0], "Search and retrieve return same"
 
 
 def test_add_asset_tags(tag_svc: TagService):
     asset = tag_svc.create_dataset(new_asset)
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
     new_tag = Tag(**{
-            "name": LABEL_NAME,
-            "value": "add1",
+            "name": "add1",
             "confidence": 0.50,
             "event_id": tagging_event.uid,
     })
@@ -109,7 +108,7 @@ def test_add_none_tags(tag_svc: TagService):
     new_tag = no_tag
     return_asset_set = tag_svc.add_tags([new_tag], asset.uid)
 
-    assert return_asset_set.tags[0].value == 'rod'
+    assert return_asset_set.tags[0].name == 'rod'
 
 
 new_asset = Dataset(**{
@@ -118,20 +117,17 @@ new_asset = Dataset(**{
     "uri": "images/test.tiff",
     "tags": [
         {
-            "name": LABEL_NAME,
-            "value": "rods",
+            "name": "rods",
             "confidence": 0.9008,
             "event_id": None,
         },
         {
-            "name": LABEL_NAME,
-            "value": "peaks",
+            "name": "peaks",
             "confidence": 0.001,
 
         },
         {
-            "name": "geometry",
-            "value": "reflection",
+            "name": "reflection",
             "confidence": 1,
             "event_id": "import_id1",
         }
@@ -164,7 +160,6 @@ no_tag_asset = Dataset(**{
 })
 
 no_tag = Tag(**{
-    "name": "label",
-    "value": "rod",
+    "name": "rod",
     "tags": None
 })

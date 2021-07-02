@@ -4,7 +4,6 @@ import graphene
 from graphene_pydantic import PydanticInputObjectType, PydanticObjectType
 from .model import (
     Dataset as DatasetModel,
-    LABEL_NAME,
     Tag as TagModel,
     TagSource as TagSourceModel
 )
