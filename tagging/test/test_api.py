@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from mongomock import MongoClient
 import pytest
+import json
 
 from ..api import (
     app,
@@ -10,10 +11,10 @@ from ..api import (
 from ..model import (
     Dataset,
     Tag,
-    TagSource
+    TagSource,
+    TagPatchRequest
 )
 from ..tag_service import TagService
-
 
 db = MongoClient().tagdb
 tag_svc = TagService(db)
@@ -27,7 +28,6 @@ def mongodb():
 @pytest.fixture
 def rest_client(mongodb):
     return TestClient(app)
-
 
 def test_taggers(rest_client: TestClient):
 
@@ -53,10 +53,12 @@ def test_tags_and_assets(rest_client: TestClient):
 
     # add a new tag
     new_tag = Tag(name="peaks", confidence=0.1)
+    req = TagPatchRequest(add_tags=[new_tag])
     response = rest_client.patch(
         f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
-        json=[new_tag.dict()])
+        json=req.dict())
     assert response.status_code == 200, f"oops {response.text}"
+    print(response)
 
     # find the asset based on tags
     response: Dataset = rest_client.get(
@@ -65,6 +67,14 @@ def test_tags_and_assets(rest_client: TestClient):
     assert response.status_code == 200, f"oops {response.text}"
     tag_sources = response.json()
     assert len(tag_sources) == 1
+
+    # delete first tag
+    tag_uid = [tag_sources[0]['uid']]
+    req = TagPatchRequest(remove_tags=tag_uid)
+    response = rest_client.patch(
+        f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
+        json=req.dict())
+    assert response.status_code == 200, f"oops {response.text}"
 
 
 # def test_add_metadata(rest_client: TestClient):
