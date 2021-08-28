@@ -2,10 +2,14 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Extra, Field
 from typing import Dict, List, Optional
+from uuid import UUID, uuid4
+from random import getrandbits
 
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
 SCHEMA_VERSION = "1.1"
 
+def new_uuid():
+    return str(uuid4())
 
 class Persistable(BaseModel):
     uid: Optional[str]
@@ -37,7 +41,16 @@ class TaggingEvent(Persistable):
         extra = Extra.forbid
 
 
-class Tag(BaseModel):
+class UserTag(BaseModel):
+    name: str = Field(description="name of the tag")
+    locator: Optional[str] = Field(description="optional location information, " \
+                            "for indicating a part of a dataset that this tag applies to")
+    confidence: Optional[float] = Field(description="confidence provided for this tag")
+    event_id: Optional[str] = Field(description="id of event where this tag was created")
+
+
+class Tag(Persistable):
+    uid: str = Field(default_factory=new_uuid)
     name: str = Field(description="name of the tag")
     locator: Optional[str] = Field(description="optional location information, " \
                             "for indicating a part of a dataset that this tag applies to")
@@ -56,7 +69,20 @@ class DatasetCollection(Persistable):
     models: Dict[str, int] # model and the quality of that model when run against a model
 
 
+class UserDataset(BaseModel):
+    schema_version: str = SCHEMA_VERSION
+    type: DatasetType
+    uri: str
+    location_kwargs: Optional[Dict[str, str]]
+    sample_id: Optional[str]
+    tags: Optional[List[UserTag]]
+
+    class Config:
+        extra = Extra.forbid
+
+
 class Dataset(Persistable):
+    uid: str = Field(default_factory=new_uuid)
     schema_version: str = SCHEMA_VERSION
     type: DatasetType
     uri: str
@@ -64,10 +90,24 @@ class Dataset(Persistable):
     sample_id: Optional[str]
     tags: Optional[List[Tag]]
 
-    class Config:
-        extra = Extra.forbid
+    def __init__(self, **data):
+        tags = data.get('tags')
+        # transforms a user defined tag into a splash-ml tag
+        if tags is not None:
+            data.pop('tags')
+            super().__init__(**data)
+            tag_list = []
+            for tag in tags:
+                tag_list.append(Tag(**tag))
+            self.tags = tag_list
+        else:
+            super().__init__(**data)
 
-
+ 
 class FileDataset(Dataset):
     type = DatasetType.file
+
+class TagPatchRequest(BaseModel):
+    add_tags: Optional[List[UserTag]]
+    remove_tags: Optional[List[str]]
 
