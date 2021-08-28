@@ -128,7 +128,7 @@ def test_remove_asset_tags(tag_svc: TagService):
     assert len(updated_asset.tags) == 1 and (remove_tags_uids==output)
 
 
-def test_delete_nonexistent_tag(tag_svc: TagService):
+def test_remove_nonexistent_tag(tag_svc: TagService):
     # this test creates a dataset with no tags and deletes a nonexistent tag
     asset = tag_svc.create_dataset(no_tag_asset)
     removed_tags_uids = ["123"]
