@@ -1,3 +1,4 @@
+from enum import Enum
 import logging
 from typing import List, Optional
 import graphene
@@ -16,9 +17,11 @@ from .query import (
 
 from .model import (
     Dataset,
+    UserDataset,
     Tag,
     TagSource,
-    TaggingEvent
+    TaggingEvent,
+    TagPatchRequest
 )
 
 from .tag_service import TagService, Context
@@ -72,9 +75,14 @@ app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , 
 class CreateResponseModel(BaseModel):
     uid: str
 
+class CreateTagPatchResponse(BaseModel):
+    added_tags_uid: Optional[List[str]]
+    removed_tags_uid: Optional[List[str]]
 
 @app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
-def add_dataset(asset: Dataset):
+def add_dataset(user_asset: UserDataset):
+    user_asset_dic = user_asset.dict()
+    asset = Dataset(**user_asset_dic)
     new_asset = svc_context.tag_svc.create_dataset(asset)
     return CreateResponseModel(uid=new_asset.uid)
 
@@ -98,15 +106,15 @@ def get_datasets(
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
-        List[Dataset]: [Full object datasets corresponding to search prarmeters]
+        List[Dataset]: [Full object datasets corresponding to search prarmeters]s
     """
     return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
 
-
-@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateResponseModel)
-def add_tags(uid: str, tags: List[Tag]):
-    new_asset = svc_context.tag_svc.add_tags(tags, uid)
-    return CreateResponseModel(uid=new_asset.uid)
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateTagPatchResponse)
+def modify_tags(uid: str, req: TagPatchRequest):
+    added_tags_uid = svc_context.tag_svc.add_tags(req.add_tags, uid)
+    removed_tags_uid = svc_context.tag_svc.delete_tags(req.remove_tags, uid)
+    return CreateTagPatchResponse(added_tags_uid=added_tags_uid, removed_tags_uid=removed_tags_uid)
 
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/metadata', tags=['datasets', 'metadata'], response_model=CreateResponseModel)
@@ -114,6 +122,7 @@ def add_tags(uid: str, tags: List[Tag]):
     raise HTTPException(405, detail="support for patching metadata is future")
     # new_asset = svc_context.tag_svc.add_metadata(tags, uid)
     # return CreateResponseModel(uid=new_asset.uid)
+
 
 @app.post(API_URL_PREFIX + '/tagsources', tags=['tag sources'], response_model=CreateResponseModel)
 def add_tag_source(asset: TagSource):
@@ -127,8 +136,11 @@ def get_tag_sources():
     return tag_sources
 
 
-
 @app.post(API_URL_PREFIX + '/events', tags=['events'], response_model=CreateResponseModel)
 def add_event(event: TaggingEvent):
     new_event = svc_context.tag_svc.create_event(event)
     return CreateResponseModel(new_event.uid)
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host='0.0.0.0', port=8000)
