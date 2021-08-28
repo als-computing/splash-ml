@@ -98,17 +98,42 @@ def test_add_asset_tags(tag_svc: TagService):
             "confidence": 0.50,
             "event_id": tagging_event.uid,
     })
-    return_asset_set = tag_svc.add_tags([new_tag], asset.uid)
-
-    assert len(return_asset_set.tags) == 4
+    added_tags_uid = tag_svc.add_tags([new_tag], asset.uid)
+    #assert len(return_asset_set.tags) == 4
+    updated_asset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uid[0]})
+    tag_svc._clean_mongo_ids(updated_asset)
+    updated_asset = Dataset.parse_obj(updated_asset)
+    assert len(updated_asset.tags) == 4
 
 
 def test_add_none_tags(tag_svc: TagService):
     asset = tag_svc.create_dataset(no_tag_asset)
-    new_tag = no_tag
-    return_asset_set = tag_svc.add_tags([new_tag], asset.uid)
+    new_tag = [no_tag]
+    added_tags_uids = tag_svc.add_tags(new_tag, asset.uid)
+    updated_asset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0]})
+    tag_svc._clean_mongo_ids(updated_asset)
+    updated_asset = Dataset.parse_obj(updated_asset)
+    #assert return_asset_set.tags[0].name == 'rod'
+    assert updated_asset.tags[0].name == 'rod'
 
-    assert return_asset_set.tags[0].name == 'rod'
+
+def test_remove_asset_tags(tag_svc: TagService):
+    # this test creates a new dataset with 3 tags, and deletes the first 2
+    asset = tag_svc.create_dataset(new_asset)
+    remove_tags_uids = [asset.tags[0].uid, asset.tags[1].uid]
+    output = tag_svc.delete_tags(remove_tags_uids, asset.uid)
+    updated_asset = tag_svc._collection_dataset.find_one({'uid': asset.uid})
+    tag_svc._clean_mongo_ids(updated_asset)
+    updated_asset = Dataset.parse_obj(updated_asset)
+    assert len(updated_asset.tags) == 1 and (remove_tags_uids==output)
+
+
+def test_delete_nonexistent_tag(tag_svc: TagService):
+    # this test creates a dataset with no tags and deletes a nonexistent tag
+    asset = tag_svc.create_dataset(no_tag_asset)
+    removed_tags_uids = ["123"]
+    delete_tags_uids = tag_svc.delete_tags(removed_tags_uids, asset.uid)
+    assert delete_tags_uids[0]=='-1'
 
 
 new_asset = Dataset(**{
@@ -124,7 +149,6 @@ new_asset = Dataset(**{
         {
             "name": "peaks",
             "confidence": 0.001,
-
         },
         {
             "name": "reflection",
@@ -159,6 +183,7 @@ no_tag_asset = Dataset(**{
     "uri": "blahblahblah"
 })
 
+## 
 no_tag = Tag(**{
     "name": "rod",
     "tags": None
