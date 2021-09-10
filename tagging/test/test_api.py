@@ -10,7 +10,9 @@ from ..api import (
 
 from ..model import (
     Dataset,
+    PersistedDataset,
     Tag,
+    PersistedTag,
     TagSource,
     TagPatchRequest
 )
@@ -38,13 +40,13 @@ def test_taggers(rest_client: TestClient):
     assert len(tag_sources) == 2, "made two tag sources"
 
 
-def test_tags_and_assets(rest_client: TestClient):
+def test_tags_and_datasets(rest_client: TestClient):
     # create a dataset
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
 
     # search on name
-    response: Dataset = rest_client.get(
+    response: PersistedDataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"offset": 0, "limit": 10, "type": "file", "uri": "/foo/bar.h5"})
     assert response.status_code == 200, f"oops {response.text}"
@@ -58,10 +60,9 @@ def test_tags_and_assets(rest_client: TestClient):
         f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
         json=req.dict())
     assert response.status_code == 200, f"oops {response.text}"
-    print(response)
 
-    # find the asset based on tags
-    response: Dataset = rest_client.get(
+    # find the dataset based on tags
+    response: PersistedDataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"skip": 0, "limit": 10, "tag_value": "peaks"})
     assert response.status_code == 200, f"oops {response.text}"
@@ -85,7 +86,6 @@ def test_tags_and_assets(rest_client: TestClient):
 #     response = rest_client.patch()
 
 
-
 def test_skip_limit(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
@@ -93,7 +93,7 @@ def test_skip_limit(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset2)
     assert response.status_code == 200
 
-    response: Dataset = rest_client.get(
+    response: PersistedDataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"page[offset]": 1, "page[limit]": 1})
     assert response.status_code == 200, f"oops {response.text}"
