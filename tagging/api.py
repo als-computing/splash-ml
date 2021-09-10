@@ -4,7 +4,7 @@ from typing import List, Optional
 import graphene
 
 from fastapi import FastAPI, Query as FastQuery, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, parse_obj_as
 from starlette.graphql import GraphQLApp
 from starlette.config import Config
 
@@ -17,8 +17,9 @@ from .query import (
 
 from .model import (
     Dataset,
-    UserDataset,
+    PersistedDataset,
     Tag,
+    PersistedTag,
     TagSource,
     TaggingEvent,
     TagPatchRequest
@@ -75,16 +76,17 @@ app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , 
 class CreateResponseModel(BaseModel):
     uid: str
 
+
 class CreateTagPatchResponse(BaseModel):
     added_tags_uid: Optional[List[str]]
     removed_tags_uid: Optional[List[str]]
 
+
 @app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
-def add_dataset(user_asset: UserDataset):
-    user_asset_dic = user_asset.dict()
-    asset = Dataset(**user_asset_dic)
-    new_asset = svc_context.tag_svc.create_dataset(asset)
-    return CreateResponseModel(uid=new_asset.uid)
+def add_dataset(user_dataset: Dataset):
+    dataset = parse_obj_as(PersistedDataset, user_dataset.dict())
+    new_dataset = svc_context.tag_svc.create_dataset(dataset)
+    return CreateResponseModel(uid=new_dataset.uid)
 
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'])
@@ -94,21 +96,22 @@ def get_datasets(
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
 
-) -> List[Dataset]:
+) -> List[PersistedDataset]:
 
 
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
 
     Args:
         uri (Optional[str], optional): find dataset based on uri. Defaults to None.
-        tags(Optional[List[str]], optional): lsit of tags to search for. Defaults to none.
+        tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
         skip (Optional[int], optional): [description]. Defaults to 0.
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
-        List[Dataset]: [Full object datasets corresponding to search prarmeters]s
+        List[PersistedDataset]: [Full object datasets corresponding to search parameters]
     """
     return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
+
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateTagPatchResponse)
 def modify_tags(uid: str, req: TagPatchRequest):
