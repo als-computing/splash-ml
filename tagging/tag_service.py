@@ -1,12 +1,15 @@
 import uuid
 from typing import Iterator, List
+from operator import attrgetter
+from pydantic import parse_obj_as
 
 from pymongo.mongo_client import MongoClient
 
 from .model import (
     Dataset,
-    UserTag,
+    PersistedDataset,
     Tag,
+    PersistedTag,
     TagSource,
     TaggingEvent
 )
@@ -14,7 +17,6 @@ from .model import (
 
 class DatasetNotFound(Exception):
     pass
-
 
 
 class TagService():
@@ -93,8 +95,6 @@ class TagService():
         """
         event_dict = event.dict()
         self._inject_uid(event_dict)
-
-        # event_dict['schema_version'] = self.SCHEMA_VERSION
         self._collection_tagging_event.insert_one(event_dict)
         self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
@@ -104,35 +104,34 @@ class TagService():
         self._clean_mongo_ids(t_e_dict)
         return TaggingEvent.parse_obj(t_e_dict)
 
-    def create_dataset(self, asset: Dataset) -> Dataset:
-        """ Create a new asset_tags data set.  The uid for this asset tag set
-        distinguishes it from others and can be used to find it later.
+    def create_dataset(self, dataset: Dataset) -> PersistedDataset:
+        """ Create a new dataset.  The uid for this dataset distinguishes
+        it from others and can be used to find it later.
 
         Parameters
         ----------
-        asset_tags : NewDataset
+        dataset : NewDataset
 
         Returns
         ----------
         Dataset
             Dataset object, with uid in it
         """
-        asset_dict = asset.dict()
-        self._inject_uid(asset_dict)
-        # asset_dict['schema_version'] = self.SCHEMA_VERSION
-        self._collection_dataset.insert_one(asset_dict)
-        self._clean_mongo_ids(asset_dict)
-        return Dataset(**asset_dict)
+        dataset = parse_obj_as(PersistedDataset, dataset.dict())
+        dataset_dict = dataset.dict()
+        self._collection_dataset.insert_one(dataset_dict)
+        self._clean_mongo_ids(dataset_dict)
+        return dataset
 
-    def add_tags(self, tags: List[UserTag], asset_uid: str) -> List[str]:
-        """ Add new asset tags to an existing asset_tags data set
-        with the given uid.
+    def add_tags(self, tags: List[Tag], dataset_uid: str) -> List[str]:
+        """ Add new set of tags to an existing data set with the
+        given uid.
         Parameters
         ----------
-        tags : List[Tag]
+        tags : List[PersistedTag]
 
-        asset_tags_uid : str
-            ID of the existing tag set to update
+        dataset_uid : str
+            ID of the existing dataset set to update
 
         Returns
         ----------
@@ -144,40 +143,37 @@ class TagService():
         if tags is None:
             return added_tags_uid
 
-        asset = self._collection_dataset.find_one({'uid': asset_uid})
-        if not asset:
-            raise DatasetNotFound(f"no asset with id: {asset_uid}")
+        dataset = self._collection_dataset.find_one({'uid': dataset_uid})
+        if not dataset:
+            raise DatasetNotFound(f"no dataset with id: {dataset_uid}")
 
-        if asset['tags'] is None:
+        if dataset['tags'] is None:
             self._collection_dataset.update_one(
-                {'uid': asset_uid},
+                {'uid': dataset_uid},
                 {'$set': {'tags': []}})
 
-        tags_dict = []
-        for user_tag in tags:
-            tag = Tag(**user_tag.dict())
-            tags_dict.append(tag.dict())
-            added_tags_uid.append(tag.uid)
+        persisted_tags = parse_obj_as(List[PersistedTag], tags)
+        added_tags_uid = list(map(attrgetter('uid'), persisted_tags))
+        persisted_tags_dict = [persisted_tag.dict() for persisted_tag in persisted_tags]
 
-        print(tags_dict)
         # Appends tags (dict) in list
         self._collection_dataset.update_one(
-            {'uid': asset_uid},
-            {'$push': {'tags': {'$each': tags_dict}}}
+            {'uid': dataset_uid},
+            {'$push': {'tags': {'$each': persisted_tags_dict}}}
         )
 
         return added_tags_uid
 
-    def delete_tags(self, list_tags_uid: List[str], asset_uid) -> List[str]:
-        """ Add new asset tags to an existing asset_tags data set
-            with the given uid.
+    def delete_tags(self, list_tags_uid: List[str], dataset_uid: str) -> List[str]:
+        """ Add new dataset tags to an existing dataset with the
+            given uid.
             Parameters
             ----------
 
-            tags_uid : List[str]
+            list_tags_uid : List[str]
                 List of tags UIDs to delete
 
-            asset_uid: str
+            dataset_uid: str
                 Dataset UID
 
             Returns
@@ -190,23 +186,23 @@ class TagService():
         if list_tags_uid is None:
             return []
 
-        asset = self._collection_dataset.find_one({'uid': asset_uid})
-        if not asset:
-            raise DatasetNotFound(f"no asset with id: {asset_uid}")
+        dataset = self._collection_dataset.find_one({'uid': dataset_uid})
+        if not dataset:
+            raise DatasetNotFound(f"no dataset with id: {dataset_uid}")
 
         # if the there are no tags in the dataset, returns list of -1
-        if asset['tags'] is None or asset['tags']==[]:
+        if dataset['tags'] is None or dataset['tags']==[]:
             return ['-1']*len(list_tags_uid)
 
         removed_tags_uid = list_tags_uid
-        result = self._collection_dataset.update_many({'uid': asset_uid},
+        result = self._collection_dataset.update_many({'uid': dataset_uid},
                                              {"$pull": {'tags':
                                                             {'uid': {'$in': list_tags_uid}}
                                                         }})
         # if the number of deleted elements does not match the number of tags,
         # finds the tag UIDs that were not deleted
         if result.modified_count is not len(list_tags_uid):
-            current_tags_uids = [current_tag['uid'] for current_tag in asset['tags']]
+            current_tags_uids = [current_tag['uid'] for current_tag in dataset['tags']]
             for i, tag_uid in enumerate(removed_tags_uid):
                 if tag_uid not in current_tags_uids:
                     removed_tags_uid[i] = -1
@@ -235,22 +231,22 @@ class TagService():
             self._clean_mongo_ids(tagger)
             yield TagSource.parse_obj(tagger)
 
-    def retrieve_dataset(self, uid) -> Dataset:
-        """Find a single asset set with the provided-uid
+    def retrieve_dataset(self, uid) -> PersistedDataset:
+        """Find a single dataset with the provided-uid
 
         Parameters
         ----------
-        uid : strrrrrrrrrr
-            uid of the tagset to return
+        uid : str
+            uid of the dataset to return
 
         Returns
         -------
         dict
-            asset set dictionary corresponding to the uid
+            dataset set dictionary corresponding to the uid
         """
         doc_tags = self._collection_dataset.find_one({'uid': uid})
         self._clean_mongo_ids(doc_tags)
-        return Dataset(**doc_tags)
+        return PersistedDataset(**doc_tags)
 
     def find_datasets(
         self, 
@@ -258,7 +254,7 @@ class TagService():
         tags: List[str]=None,
         offset=0, 
         limit=10, 
-        ) -> Iterator[Dataset]:
+        ) -> Iterator[PersistedDataset]:
         # **search_filters) -> Iterator[Dataset]:
         """Find all TagSets matching search filters
 
@@ -287,7 +283,7 @@ class TagService():
         cursor = self._collection_dataset.find(query).skip(offset).limit(limit)
         for item in cursor:
             self._clean_mongo_ids(item)
-            yield Dataset.parse_obj(item)
+            yield PersistedDataset.parse_obj(item)
 
     def _create_indexes(self):
         self._collection_tag_sources.create_index([
