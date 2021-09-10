@@ -7,8 +7,10 @@ from ..tag_service import TagService
 from ..model import (
     SCHEMA_VERSION,
     Dataset,
+    PersistedDataset,
     DatasetType,
     Tag,
+    PersistedTag,
     TagSource,
     TaggingEvent
 )
@@ -33,7 +35,7 @@ def test_unique_uid_tag_set(tag_svc: TagService):
     tagger = tag_svc.create_tag_source(new_tagger)
     new_tagging_event.tagger_id = tagger.uid
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
-    asset = tag_svc.create_dataset(new_asset)
+    asset = tag_svc.create_dataset(new_dataset)
     with pytest.raises(DuplicateKeyError):
         another_tagger = TagSource(**
                 {"uid": tagger.uid,
@@ -50,7 +52,7 @@ def test_unique_uid_tag_set(tag_svc: TagService):
         tag_svc.create_tagging_event(another_event)
 
     with pytest.raises(DuplicateKeyError):
-        another_asset = Dataset(**{
+        another_asset = PersistedDataset(**{
             "uid": asset.uid,
             "type": "file",
             "uri": "bar"})
@@ -76,7 +78,7 @@ def test_create_and_find_tagging_event(tag_svc: TagService):
 def test_create_and_find_asset(tag_svc: TagService):
     tagger = tag_svc.create_tag_source(new_tagger)
     new_tagging_event.tagger_id = tagger.uid
-    asset = tag_svc.create_dataset(new_asset)
+    asset = tag_svc.create_dataset(new_dataset)
     return_asset = tag_svc.retrieve_dataset(asset.uid)
 
     assert return_asset.schema_version == SCHEMA_VERSION
@@ -90,53 +92,51 @@ def test_create_and_find_asset(tag_svc: TagService):
     assert return_asset == returns_asset_from_search[0], "Search and retrieve return same"
 
 
-def test_add_asset_tags(tag_svc: TagService):
-    asset = tag_svc.create_dataset(new_asset)
+def test_add_dataset_tags(tag_svc: TagService):
+    dataset = tag_svc.create_dataset(new_dataset)
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
     new_tag = Tag(**{
             "name": "add1",
             "confidence": 0.50,
             "event_id": tagging_event.uid,
     })
-    added_tags_uid = tag_svc.add_tags([new_tag], asset.uid)
-    #assert len(return_asset_set.tags) == 4
-    updated_asset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uid[0]})
-    tag_svc._clean_mongo_ids(updated_asset)
-    updated_asset = Dataset.parse_obj(updated_asset)
-    assert len(updated_asset.tags) == 4
+    added_tags_uid = tag_svc.add_tags([new_tag], dataset.uid)
+    updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uid[0]})
+    tag_svc._clean_mongo_ids(updated_dataset)
+    updated_dataset = PersistedDataset.parse_obj(updated_dataset)
+    assert len(updated_dataset.tags) == 4
 
 
 def test_add_none_tags(tag_svc: TagService):
-    asset = tag_svc.create_dataset(no_tag_asset)
+    dataset = tag_svc.create_dataset(no_tag_dataset)
     new_tag = [no_tag]
-    added_tags_uids = tag_svc.add_tags(new_tag, asset.uid)
-    updated_asset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0]})
-    tag_svc._clean_mongo_ids(updated_asset)
-    updated_asset = Dataset.parse_obj(updated_asset)
-    #assert return_asset_set.tags[0].name == 'rod'
-    assert updated_asset.tags[0].name == 'rod'
+    added_tags_uids = tag_svc.add_tags(new_tag, dataset.uid)
+    updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0]})
+    tag_svc._clean_mongo_ids(updated_dataset)
+    updated_dataset = PersistedDataset.parse_obj(updated_dataset)
+    assert updated_dataset.tags[0].name == 'rod'
 
 
-def test_remove_asset_tags(tag_svc: TagService):
+def test_remove_dataset_tags(tag_svc: TagService):
     # this test creates a new dataset with 3 tags, and deletes the first 2
-    asset = tag_svc.create_dataset(new_asset)
-    remove_tags_uids = [asset.tags[0].uid, asset.tags[1].uid]
-    output = tag_svc.delete_tags(remove_tags_uids, asset.uid)
-    updated_asset = tag_svc._collection_dataset.find_one({'uid': asset.uid})
-    tag_svc._clean_mongo_ids(updated_asset)
-    updated_asset = Dataset.parse_obj(updated_asset)
-    assert len(updated_asset.tags) == 1 and (remove_tags_uids==output)
+    dataset = tag_svc.create_dataset(new_dataset)
+    remove_tags_uids = [dataset.tags[0].uid, dataset.tags[1].uid]
+    output = tag_svc.delete_tags(remove_tags_uids, dataset.uid)
+    updated_dataset = tag_svc._collection_dataset.find_one({'uid': dataset.uid})
+    tag_svc._clean_mongo_ids(updated_dataset)
+    updated_dataset = PersistedDataset.parse_obj(updated_dataset)
+    assert len(updated_dataset.tags) == 1 and (remove_tags_uids==output)
 
 
 def test_remove_nonexistent_tag(tag_svc: TagService):
     # this test creates a dataset with no tags and deletes a nonexistent tag
-    asset = tag_svc.create_dataset(no_tag_asset)
+    dataset = tag_svc.create_dataset(no_tag_dataset)
     removed_tags_uids = ["123"]
-    delete_tags_uids = tag_svc.delete_tags(removed_tags_uids, asset.uid)
-    assert delete_tags_uids[0]=='-1'
+    delete_tags_uids = tag_svc.delete_tags(removed_tags_uids, dataset.uid)
+    assert delete_tags_uids[0] == '-1'
 
 
-new_asset = Dataset(**{
+new_dataset = Dataset(**{
     "sample_id": "house paint 1234",
     "type": DatasetType.file,
     "uri": "images/test.tiff",
@@ -178,7 +178,7 @@ new_tagger = TagSource(**{
     }
 })
 
-no_tag_asset = Dataset(**{
+no_tag_dataset = Dataset(**{
     "type": "file",
     "uri": "blahblahblah"
 })
