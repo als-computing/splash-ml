@@ -17,9 +17,7 @@ from .query import (
 
 from .model import (
     Dataset,
-    PersistedDataset,
     Tag,
-    PersistedTag,
     TagSource,
     TaggingEvent,
     TagPatchRequest
@@ -83,8 +81,7 @@ class CreateTagPatchResponse(BaseModel):
 
 
 @app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
-def add_dataset(user_dataset: Dataset):
-    dataset = parse_obj_as(PersistedDataset, user_dataset.dict())
+def add_dataset(dataset: Dataset):
     new_dataset = svc_context.tag_svc.create_dataset(dataset)
     return CreateResponseModel(uid=new_dataset.uid)
 
@@ -96,7 +93,7 @@ def get_datasets(
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
 
-) -> List[PersistedDataset]:
+) -> List[Dataset]:
 
 
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
@@ -108,15 +105,14 @@ def get_datasets(
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
-        List[PersistedDataset]: [Full object datasets corresponding to search parameters]
+        List[Dataset]: [Full object datasets corresponding to search parameters]
     """
     return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
 
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateTagPatchResponse)
 def modify_tags(uid: str, req: TagPatchRequest):
-    added_tags_uid = svc_context.tag_svc.add_tags(req.add_tags, uid)
-    removed_tags_uid = svc_context.tag_svc.delete_tags(req.remove_tags, uid)
+    added_tags_uid, removed_tags_uid = svc_context.tag_svc.modify_tags(req, uid)
     return CreateTagPatchResponse(added_tags_uid=added_tags_uid, removed_tags_uid=removed_tags_uid)
 
 
