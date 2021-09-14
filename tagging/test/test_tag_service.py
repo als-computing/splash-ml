@@ -7,10 +7,9 @@ from ..tag_service import TagService
 from ..model import (
     SCHEMA_VERSION,
     Dataset,
-    PersistedDataset,
     DatasetType,
     Tag,
-    PersistedTag,
+    TagPatchRequest,
     TagSource,
     TaggingEvent
 )
@@ -52,11 +51,16 @@ def test_unique_uid_tag_set(tag_svc: TagService):
         tag_svc.create_tagging_event(another_event)
 
     with pytest.raises(DuplicateKeyError):
-        another_asset = PersistedDataset(**{
+        another_dataset = Dataset(**{
             "uid": asset.uid,
             "type": "file",
             "uri": "bar"})
-        tag_svc.create_dataset(another_asset)
+        updated_dataset = tag_svc.create_dataset(another_dataset)
+        # create dataset will not raise the error by itself because it overwrites the UID
+        # To force duplicate:
+        tag_svc._collection_dataset.update_one({'uid': updated_dataset.uid},
+                                               {'$set': {'uid': asset.uid}}
+                                               )
 
 
 def test_create_and_find_tagger(tag_svc: TagService):
@@ -100,20 +104,21 @@ def test_add_dataset_tags(tag_svc: TagService):
             "confidence": 0.50,
             "event_id": tagging_event.uid,
     })
-    added_tags_uid = tag_svc.add_tags([new_tag], dataset.uid)
-    updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uid[0]})
+    req = TagPatchRequest(add_tags=[new_tag],remove_tags=[])
+    added_tags_uids = tag_svc.modify_tags(req, dataset.uid)
+    updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0][0]})
     tag_svc._clean_mongo_ids(updated_dataset)
-    updated_dataset = PersistedDataset.parse_obj(updated_dataset)
+    updated_dataset = Dataset.parse_obj(updated_dataset)
     assert len(updated_dataset.tags) == 4
 
 
 def test_add_none_tags(tag_svc: TagService):
     dataset = tag_svc.create_dataset(no_tag_dataset)
-    new_tag = [no_tag]
-    added_tags_uids = tag_svc.add_tags(new_tag, dataset.uid)
-    updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0]})
+    req = TagPatchRequest(add_tags=[no_tag], remove_tags=[])
+    added_tags_uids = tag_svc.modify_tags(req, dataset.uid)
+    updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0][0]})
     tag_svc._clean_mongo_ids(updated_dataset)
-    updated_dataset = PersistedDataset.parse_obj(updated_dataset)
+    updated_dataset = Dataset.parse_obj(updated_dataset)
     assert updated_dataset.tags[0].name == 'rod'
 
 
@@ -121,19 +126,19 @@ def test_remove_dataset_tags(tag_svc: TagService):
     # this test creates a new dataset with 3 tags, and deletes the first 2
     dataset = tag_svc.create_dataset(new_dataset)
     remove_tags_uids = [dataset.tags[0].uid, dataset.tags[1].uid]
-    output = tag_svc.delete_tags(remove_tags_uids, dataset.uid)
-    updated_dataset = tag_svc._collection_dataset.find_one({'uid': dataset.uid})
-    tag_svc._clean_mongo_ids(updated_dataset)
-    updated_dataset = PersistedDataset.parse_obj(updated_dataset)
-    assert len(updated_dataset.tags) == 1 and (remove_tags_uids==output)
+    req = TagPatchRequest(add_tags=[], remove_tags=remove_tags_uids)
+    output = tag_svc.modify_tags(req, dataset.uid)
+    updated_dataset = tag_svc.retrieve_dataset(dataset.uid)
+    assert len(updated_dataset.tags) == 1 and (remove_tags_uids == output[1])
 
 
 def test_remove_nonexistent_tag(tag_svc: TagService):
     # this test creates a dataset with no tags and deletes a nonexistent tag
     dataset = tag_svc.create_dataset(no_tag_dataset)
-    removed_tags_uids = ["123"]
-    delete_tags_uids = tag_svc.delete_tags(removed_tags_uids, dataset.uid)
-    assert delete_tags_uids[0] == '-1'
+    remove_tags_uids = ["123"]
+    req = TagPatchRequest(add_tags=[], remove_tags=remove_tags_uids)
+    deleted_tags_uids = tag_svc.modify_tags(req, dataset.uid)
+    assert deleted_tags_uids[1][0] == '-1'
 
 
 new_dataset = Dataset(**{
