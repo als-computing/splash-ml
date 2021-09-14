@@ -10,9 +10,7 @@ from ..api import (
 
 from ..model import (
     Dataset,
-    PersistedDataset,
     Tag,
-    PersistedTag,
     TagSource,
     TagPatchRequest
 )
@@ -22,6 +20,7 @@ db = MongoClient().tagdb
 tag_svc = TagService(db)
 svc_context.tag_svc = tag_svc
 
+
 @pytest.fixture
 def mongodb():
     return db
@@ -30,6 +29,7 @@ def mongodb():
 @pytest.fixture
 def rest_client(mongodb):
     return TestClient(app)
+
 
 def test_taggers(rest_client: TestClient):
 
@@ -46,7 +46,7 @@ def test_tags_and_datasets(rest_client: TestClient):
     assert response.status_code == 200
 
     # search on name
-    response: PersistedDataset = rest_client.get(
+    response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"offset": 0, "limit": 10, "type": "file", "uri": "/foo/bar.h5"})
     assert response.status_code == 200, f"oops {response.text}"
@@ -62,7 +62,7 @@ def test_tags_and_datasets(rest_client: TestClient):
     assert response.status_code == 200, f"oops {response.text}"
 
     # find the dataset based on tags
-    response: PersistedDataset = rest_client.get(
+    response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"skip": 0, "limit": 10, "tag_value": "peaks"})
     assert response.status_code == 200, f"oops {response.text}"
@@ -78,14 +78,6 @@ def test_tags_and_datasets(rest_client: TestClient):
     assert response.status_code == 200, f"oops {response.text}"
 
 
-# def test_add_metadata(rest_client: TestClient):
-#     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
-#     assert response.status_code == 200
-#     new_uid = response.json()['uid']
-
-#     response = rest_client.patch()
-
-
 def test_skip_limit(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
@@ -93,13 +85,12 @@ def test_skip_limit(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset2)
     assert response.status_code == 200
 
-    response: PersistedDataset = rest_client.get(
+    response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"page[offset]": 1, "page[limit]": 1})
     assert response.status_code == 200, f"oops {response.text}"
     source = response.json()
     assert len(source) == 1
-
 
 
 tag_source_1_dict = {
