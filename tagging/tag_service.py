@@ -2,14 +2,14 @@ import uuid
 from typing import Iterator, List
 from operator import attrgetter
 from pydantic import parse_obj_as
+from uuid import UUID, uuid4
 
 from pymongo.mongo_client import MongoClient
 
 from .model import (
     Dataset,
-    PersistedDataset,
     Tag,
-    PersistedTag,
+    TagPatchRequest,
     TagSource,
     TaggingEvent
 )
@@ -104,7 +104,7 @@ class TagService():
         self._clean_mongo_ids(t_e_dict)
         return TaggingEvent.parse_obj(t_e_dict)
 
-    def create_dataset(self, dataset: Dataset) -> PersistedDataset:
+    def create_dataset(self, dataset: Dataset) -> Dataset:
         """ Create a new dataset.  The uid for this dataset distinguishes
         it from others and can be used to find it later.
 
@@ -117,18 +117,21 @@ class TagService():
         Dataset
             Dataset object, with uid in it
         """
-        dataset = parse_obj_as(PersistedDataset, dataset.dict())
+        # Assign new UIDs to dataset and tags
+        dataset.uid = str(uuid4())
+        if dataset.tags is not None:
+            for i in range(len(dataset.tags)):
+                dataset.tags[i].uid = str(uuid4())
         dataset_dict = dataset.dict()
         self._collection_dataset.insert_one(dataset_dict)
         self._clean_mongo_ids(dataset_dict)
         return dataset
 
-    def add_tags(self, tags: List[Tag], dataset_uid: str) -> List[str]:
-        """ Add new set of tags to an existing data set with the
-        given uid.
+    def modify_tags(self, req: TagPatchRequest, dataset_uid: str) -> (List[str], List[str]):
+        """ Add new set of tags or deletes a list of tags from an existing data set with the given uid.
         Parameters
         ----------
-        tags : List[PersistedTag]
+        req: TagPatchRequest
 
         dataset_uid : str
             ID of the existing dataset set to update
@@ -136,12 +139,17 @@ class TagService():
         Returns
         ----------
         added_tags_uid : List[str]
-            List of the UIDs of the added tags
+            List of added tags UIDs
+
+        removed_tags_uid : List[str]
+            List of removed tags UIDs
+            If tag UID did not exit in the given dataset, it returns -1
         """
+        tags2add = req.add_tags
+        tags2remove = req.remove_tags
+
         added_tags_uid = []
-        # If no tags were sent, returns empty list
-        if tags is None:
-            return added_tags_uid
+        removed_tags_uid = []
 
         dataset = self._collection_dataset.find_one({'uid': dataset_uid})
         if not dataset:
@@ -152,61 +160,38 @@ class TagService():
                 {'uid': dataset_uid},
                 {'$set': {'tags': []}})
 
-        persisted_tags = parse_obj_as(List[PersistedTag], tags)
-        added_tags_uid = list(map(attrgetter('uid'), persisted_tags))
-        persisted_tags_dict = [persisted_tag.dict() for persisted_tag in persisted_tags]
+        if tags2add:
+            # Assign UIDs to tags
+            tags2add_dict = []
+            for tag in tags2add:
+                tag.uid = str(uuid4())
+                added_tags_uid.append(tag.uid)
+                tags2add_dict.append(tag.dict())
+            # Appends tags (dict) in list
+            self._collection_dataset.update_one(
+                {'uid': dataset_uid},
+                {'$push': {'tags': {'$each': tags2add_dict}}}
+            )
 
-        # Appends tags (dict) in list
-        self._collection_dataset.update_one(
-            {'uid': dataset_uid},
-            {'$push': {'tags': {'$each': persisted_tags_dict}}}
-        )
+        if tags2remove:
+            # if the there are no tags to delete in the dataset, returns list of -1
+            if dataset['tags'] is None or dataset['tags'] == []:
+                removed_tags_uid = ['-1'] * len(tags2remove)
+            else:
+                result = self._collection_dataset.update_many({'uid': dataset_uid},
+                                                              {"$pull": {'tags':
+                                                                             {'uid': {'$in': tags2remove}}
+                                                                         }})
+                removed_tags_uid = tags2remove
+                # if the number of deleted elements does not match the number of tags,
+                # finds the tag UIDs that were not deleted
+                if result.modified_count is not len(tags2remove):
+                    current_tags_uids = [current_tag['uid'] for current_tag in dataset['tags']]
+                    for i, tag_uid in enumerate(removed_tags_uid):
+                        if tag_uid not in current_tags_uids:
+                            removed_tags_uid[i] = -1
 
-        return added_tags_uid
-
-    def delete_tags(self, list_tags_uid: List[str], dataset_uid: str) -> List[str]:
-        """ Add new dataset tags to an existing dataset with the
-            given uid.
-            Parameters
-            ----------
-
-            list_tags_uid : List[str]
-                List of tags UIDs to delete
-
-            dataset_uid: str
-                Dataset UID
-
-            Returns
-            ----------
-            removed_tags_uid : List[str]
-                List of removed tags UIDs
-                If tag UID did not exist, returns -1
-            """
-        # user sent no tags to delete
-        if list_tags_uid is None:
-            return []
-
-        dataset = self._collection_dataset.find_one({'uid': dataset_uid})
-        if not dataset:
-            raise DatasetNotFound(f"no dataset with id: {dataset_uid}")
-
-        # if the there are no tags in the dataset, returns list of -1
-        if dataset['tags'] is None or dataset['tags']==[]:
-            return ['-1']*len(list_tags_uid)
-
-        removed_tags_uid = list_tags_uid
-        result = self._collection_dataset.update_many({'uid': dataset_uid},
-                                             {"$pull": {'tags':
-                                                            {'uid': {'$in': list_tags_uid}}
-                                                        }})
-        # if the number of deleted elements does not match the number of tags,
-        # finds the tag UIDs that were not deleted
-        if result.modified_count is not len(list_tags_uid):
-            current_tags_uids = [current_tag['uid'] for current_tag in dataset['tags']]
-            for i, tag_uid in enumerate(removed_tags_uid):
-                if tag_uid not in current_tags_uids:
-                    removed_tags_uid[i] = -1
-        return removed_tags_uid
+        return added_tags_uid, removed_tags_uid
 
     def find_tag_sources(self, **search_filters) -> Iterator[TagSource]:
         """ Searches database for tags using the search_filters as query terms.
@@ -231,7 +216,7 @@ class TagService():
             self._clean_mongo_ids(tagger)
             yield TagSource.parse_obj(tagger)
 
-    def retrieve_dataset(self, uid) -> PersistedDataset:
+    def retrieve_dataset(self, uid) -> Dataset:
         """Find a single dataset with the provided-uid
 
         Parameters
@@ -246,7 +231,7 @@ class TagService():
         """
         doc_tags = self._collection_dataset.find_one({'uid': uid})
         self._clean_mongo_ids(doc_tags)
-        return PersistedDataset(**doc_tags)
+        return Dataset(**doc_tags)
 
     def find_datasets(
         self, 
@@ -254,7 +239,7 @@ class TagService():
         tags: List[str]=None,
         offset=0, 
         limit=10, 
-        ) -> Iterator[PersistedDataset]:
+        ) -> Iterator[Dataset]:
         # **search_filters) -> Iterator[Dataset]:
         """Find all TagSets matching search filters
 
@@ -283,7 +268,7 @@ class TagService():
         cursor = self._collection_dataset.find(query).skip(offset).limit(limit)
         for item in cursor:
             self._clean_mongo_ids(item)
-            yield PersistedDataset.parse_obj(item)
+            yield Dataset.parse_obj(item)
 
     def _create_indexes(self):
         self._collection_tag_sources.create_index([
@@ -318,9 +303,9 @@ class TagService():
             ('tags.name', 1),
         ]),
 
-        #self._collection_dataset.create_index([
-        #    ('tags.uid', 1),
-        #], unique=True)
+        self._collection_dataset.create_index([
+           ('tags.uid', 1),
+        ], unique=True)
 
         self._collection_dataset.create_index([
             ('tags.confidence', 1),
