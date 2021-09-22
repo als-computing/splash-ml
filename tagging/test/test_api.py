@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from mongomock import MongoClient
 import pytest
+import json
 
 from ..api import (
     app,
@@ -10,14 +11,15 @@ from ..api import (
 from ..model import (
     Dataset,
     Tag,
-    TagSource
+    TagSource,
+    TagPatchRequest
 )
 from ..tag_service import TagService
-
 
 db = MongoClient().tagdb
 tag_svc = TagService(db)
 svc_context.tag_svc = tag_svc
+
 
 @pytest.fixture
 def mongodb():
@@ -38,7 +40,7 @@ def test_taggers(rest_client: TestClient):
     assert len(tag_sources) == 2, "made two tag sources"
 
 
-def test_tags_and_assets(rest_client: TestClient):
+def test_tags_and_datasets(rest_client: TestClient):
     # create a dataset
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
@@ -53,12 +55,13 @@ def test_tags_and_assets(rest_client: TestClient):
 
     # add a new tag
     new_tag = Tag(name="peaks", confidence=0.1)
+    req = TagPatchRequest(add_tags=[new_tag])
     response = rest_client.patch(
         f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
-        json=[new_tag.dict()])
+        json=req.dict())
     assert response.status_code == 200, f"oops {response.text}"
 
-    # find the asset based on tags
+    # find the dataset based on tags
     response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
         params={"skip": 0, "limit": 10, "tag_value": "peaks"})
@@ -66,14 +69,13 @@ def test_tags_and_assets(rest_client: TestClient):
     tag_sources = response.json()
     assert len(tag_sources) == 1
 
-
-# def test_add_metadata(rest_client: TestClient):
-#     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
-#     assert response.status_code == 200
-#     new_uid = response.json()['uid']
-
-#     response = rest_client.patch()
-
+    # delete first tag
+    tag_uid = [tag_sources[0]['uid']]
+    req = TagPatchRequest(remove_tags=tag_uid)
+    response = rest_client.patch(
+        f"{API_URL_PREFIX}/datasets/{tag_sources[0]['uid']}/tags",
+        json=req.dict())
+    assert response.status_code == 200, f"oops {response.text}"
 
 
 def test_skip_limit(rest_client: TestClient):
@@ -89,7 +91,6 @@ def test_skip_limit(rest_client: TestClient):
     assert response.status_code == 200, f"oops {response.text}"
     source = response.json()
     assert len(source) == 1
-
 
 
 tag_source_1_dict = {
