@@ -1,3 +1,4 @@
 pymongo
 pydantic
 uvicorn
+uuid

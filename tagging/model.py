@@ -1,10 +1,11 @@
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Extra, Field, create_model
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Any, Union, Type
 
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
+DEFAULT_UID = "342e4568-e23b-12d3-a456-526714178000"
 
 
 class Persistable(BaseModel):
@@ -30,7 +31,6 @@ class SimpleMetadata(Metadata):
 
 
 class TagSource(Persistable):
-
     schema_version: str = SCHEMA_VERSION
     model_info: Optional[ModelInfo]
     type: str
@@ -51,6 +51,7 @@ class TaggingEvent(Persistable):
 
 
 class Tag(BaseModel):
+    uid: str = DEFAULT_UID
     name: str = Field(description="name of the tag")
     locator: Optional[str] = Field(description="optional location information, " \
                             "for indicating a part of a dataset that this tag applies to")
@@ -69,7 +70,8 @@ class DatasetCollection(Persistable):
     models: Dict[str, int] # model and the quality of that model when run against a model
 
 
-class Dataset(Persistable):
+class Dataset(BaseModel):
+    uid: str = DEFAULT_UID
     schema_version: str = SCHEMA_VERSION
     type: DatasetType
     uri: str
@@ -81,7 +83,7 @@ class Dataset(Persistable):
     class Config:
         extra = Extra.forbid
 
-
+ 
 class FileDataset(Dataset):
     type = DatasetType.file
 
@@ -110,3 +112,7 @@ CustomDataset = create_model(
     **add_to_metadata(Dataset))
 
 Dataset = CustomDataset
+class TagPatchRequest(BaseModel):
+    add_tags: Optional[List[Tag]]
+    remove_tags: Optional[List[str]]
+
