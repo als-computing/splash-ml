@@ -57,6 +57,8 @@ class TagService():
         self._collection_dataset = self._db.data_set
         self._create_indexes()
 
+        
+
     def create_tag_source(self, tag_source: TagSource) -> TagSource:
         """
         Create a new tagger data set. The uid from this tagger will act like a

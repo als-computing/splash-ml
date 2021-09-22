@@ -1,11 +1,12 @@
-from graphene.types.objecttype import ObjectType
 from tagging.tag_service import TagService
 import graphene
 from graphene_pydantic import PydanticInputObjectType, PydanticObjectType
-from .model import (
+from tagging.model import (
     Dataset as DatasetModel,
     Tag as TagModel,
-    TagSource as TagSourceModel
+    TagSource as TagSourceModel,
+    Metadata as MetadataModel,
+    NVPair as NVPairModel
 )
 
 
@@ -33,6 +34,14 @@ class Tag(PydanticObjectType):
     class Meta:
         model = TagModel
 
+
+class NVPair(PydanticObjectType):
+    class Meta:
+        model = NVPairModel
+
+class Metadata(PydanticObjectType):
+    class Meta:
+        model = MetadataModel
 
 class Dataset(PydanticObjectType):
     tags = graphene.List(of_type=Tag)

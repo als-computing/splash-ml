@@ -7,11 +7,11 @@ from pydantic import BaseModel
 from starlette.graphql import GraphQLApp
 from starlette.config import Config
 
-from .query import (
-    Query,
-    # Mutation,
-    context as query_context
-)
+# from .query import (
+#     Query,
+#     # Mutation,
+#     context as query_context
+# )
 
 
 from .model import (
@@ -63,10 +63,10 @@ async def startup_event():
     db = MongoClient(MONGO_DB_URI)
     tag_svc = TagService(db)
     svc_context.tag_svc = tag_svc
-    query_context.tag_svc = tag_svc
+    # query_context.tag_svc = tag_svc
 
 
-app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , mutation=Mutation)))
+# app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , mutation=Mutation)))
 
 
 class CreateResponseModel(BaseModel):
@@ -79,7 +79,7 @@ def add_dataset(asset: Dataset):
     return CreateResponseModel(uid=new_asset.uid)
 
 
-@app.get(API_URL_PREFIX + '/datasets', tags=['datasets'])
+@app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])
 def get_datasets(
     uri: Optional[str] = None,
     tags: Optional[List[str]] = FastQuery(None),
