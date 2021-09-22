@@ -141,3 +141,5 @@ scratch/
 .scratch/
 
 data/
+
+.ipynb_checkpoints/

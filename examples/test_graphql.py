@@ -1,11 +1,8 @@
 import uuid
-from typing import Dict
 
 import pydantic
 import graphene
 from graphene_pydantic import PydanticObjectType
-
-from pprint import pprint
 
 
 class AddressModel(pydantic.BaseModel):

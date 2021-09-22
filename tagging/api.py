@@ -1,11 +1,10 @@
-from enum import Enum
 import logging
 from typing import List, Optional
-import graphene
+# import graphene
 
 from fastapi import FastAPI, Query as FastQuery, HTTPException
-from pydantic import BaseModel, parse_obj_as
-from starlette.graphql import GraphQLApp
+from pydantic import BaseModel
+# from starlette.graphql import GraphQLApp
 from starlette.config import Config
 
 # from .query import (
@@ -30,6 +29,7 @@ logger = logging.getLogger('splash_ml')
 
 DEFAULT_PAGE_SIZE = 20
 
+
 def init_logging():
     ch = logging.StreamHandler()
     # ch.setLevel(logging.INFO)
@@ -49,10 +49,10 @@ API_URL_PREFIX = "/api/v0"
 
 init_logging()
 
-app = FastAPI(    
+app = FastAPI(
     openapi_url="/api/splash_ml/openapi.json",
     docs_url="/api/splash_ml/docs",
-    redoc_url="/api/splash_ml/redoc",)
+    redoc_url="/api/splash_ml/redoc")
 
 
 svc_context = Context()
@@ -94,10 +94,7 @@ def get_datasets(
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
 
 ) -> List[Dataset]:
-
-
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
-
     Args:
         uri (Optional[str], optional): find dataset based on uri. Defaults to None.
         tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
@@ -139,6 +136,7 @@ def get_tag_sources():
 def add_event(event: TaggingEvent):
     new_event = svc_context.tag_svc.create_event(event)
     return CreateResponseModel(new_event.uid)
+
 
 if __name__ == '__main__':
     import uvicorn

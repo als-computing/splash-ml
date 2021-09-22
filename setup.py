@@ -24,14 +24,14 @@ with open(path.join(here, 'requirements-examples.txt')) as requirements_file:
                             if not line.startswith('#')]
 setup(
 
-    name='splash-ml',  
+    name='splash-ml',
     version='0.0.1',
-    description='tag management for assets wherever', 
-    long_description=long_description,  
-    long_description_content_type='text/markdown', 
-    url='https://github.com/als-computing/splash-ml',  
-    author='Dylan McReynolds', 
-    author_email='dmcreynolds@lbl.gov',  
+    description='tag management for assets wherever',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/als-computing/splash-ml',
+    author='Dylan McReynolds',
+    author_email='dmcreynolds@lbl.gov',
     classifiers=[  # Optional
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',

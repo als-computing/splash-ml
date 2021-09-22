@@ -37,17 +37,17 @@ def test_unique_uid_tag_set(tag_svc: TagService):
     asset = tag_svc.create_dataset(new_dataset)
     with pytest.raises(DuplicateKeyError):
         another_tagger = TagSource(**
-                {"uid": tagger.uid,
-                 "type": "model",
-                 "name": "netty"})
+                                   {"uid": tagger.uid,
+                                    "type": "model",
+                                    "name": "netty"})
         tag_svc.create_tag_source(another_tagger)
-           
+
     with pytest.raises(DuplicateKeyError):
         another_event = TaggingEvent(**
-            {"uid": tagging_event.uid,
-             "tagger_id": tagger.uid,
-             "run_time": json_datetime(3),
-             "accuracy": 1})
+                                     {"uid": tagging_event.uid,
+                                      "tagger_id": tagger.uid,
+                                      "run_time": json_datetime(3),
+                                      "accuracy": 1})
         tag_svc.create_tagging_event(another_event)
 
     with pytest.raises(DuplicateKeyError):
@@ -104,7 +104,7 @@ def test_add_dataset_tags(tag_svc: TagService):
             "confidence": 0.50,
             "event_id": tagging_event.uid,
     })
-    req = TagPatchRequest(add_tags=[new_tag],remove_tags=[])
+    req = TagPatchRequest(add_tags=[new_tag], remove_tags=[])
     added_tags_uids = tag_svc.modify_tags(req, dataset.uid)
     updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0][0]})
     tag_svc._clean_mongo_ids(updated_dataset)
@@ -188,7 +188,7 @@ no_tag_dataset = Dataset(**{
     "uri": "blahblahblah"
 })
 
-## 
+
 no_tag = Tag(**{
     "name": "rod",
     "tags": None

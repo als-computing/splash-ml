@@ -21,9 +21,9 @@ class NVPair(BaseModel):
     value: str
     scope: Optional[str]
 
+
 class Metadata(BaseModel):
     properties: List[NVPair]
-
 
 
 class SimpleMetadata(Metadata):
@@ -53,8 +53,8 @@ class TaggingEvent(Persistable):
 class Tag(BaseModel):
     uid: str = DEFAULT_UID
     name: str = Field(description="name of the tag")
-    locator: Optional[str] = Field(description="optional location information, " \
-                            "for indicating a part of a dataset that this tag applies to")
+    locator: Optional[str] = Field(description="optional location information, "
+                                               "for indicating a part of a dataset that this tag applies to")
     confidence: Optional[float] = Field(description="confidence provided for this tag")
     event_id: Optional[str] = Field(description="id of event where this tag was created")
 
@@ -67,7 +67,7 @@ class DatasetType(str, Enum):
 
 class DatasetCollection(Persistable):
     assets: List[str]
-    models: Dict[str, int] # model and the quality of that model when run against a model
+    models: Dict[str, int]  # model and the quality of that model when run against a model
 
 
 class Dataset(BaseModel):
@@ -79,11 +79,11 @@ class Dataset(BaseModel):
     sample_id: Optional[str]
     tags: Optional[List[Tag]]
     metadata: Optional[Union[Metadata, SimpleMetadata]]
-    
+
     class Config:
         extra = Extra.forbid
 
- 
+
 class FileDataset(Dataset):
     type = DatasetType.file
 
@@ -102,17 +102,20 @@ def add_to_metadata(model: Type[BaseModel]) -> Dict[str, Tuple[Any, None]]:
         model_fields[f.name] = f
     return model_fields
 
+
 # CustomDataset = create_model('Dataset', **add_to_metadata(Dataset))
 CustomDataset = create_model(
-    'Dataset', 
-    __config__ = Dataset.__config__,
-    # __base__ = Dataset.__base__,
-    __module__ = Dataset.__module__,
-    __validators__ = Dataset.__validators__,
+    'Dataset',
+    __config__=Dataset.__config__,
+    # __base__=Dataset.__base__,
+    __module__=Dataset.__module__,
+    __validators__=Dataset.__validators__,
     **add_to_metadata(Dataset))
 
+
 Dataset = CustomDataset
+
+
 class TagPatchRequest(BaseModel):
     add_tags: Optional[List[Tag]]
     remove_tags: Optional[List[str]]
-
