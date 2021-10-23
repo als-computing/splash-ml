@@ -1,0 +1,30 @@
+{
+	"folders": [
+		{
+			"name": "splash-ml",
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#a7b77b",
+			"activityBar.activeBorder": "#4f7f90",
+			"activityBar.background": "#a7b77b",
+			"activityBar.foreground": "#15202b",
+			"activityBar.inactiveForeground": "#15202b99",
+			"activityBarBadge.background": "#4f7f90",
+			"activityBarBadge.foreground": "#e7e7e7",
+			"statusBar.background": "#91a55a",
+			"statusBar.foreground": "#15202b",
+			"statusBarItem.hoverBackground": "#748448",
+			"titleBar.activeBackground": "#91a55a",
+			"titleBar.activeForeground": "#15202b",
+			"titleBar.inactiveBackground": "#91a55a99",
+			"titleBar.inactiveForeground": "#15202b99"
+		},
+		"peacock.color": "#91a55a",
+		"jupyter.jupyterServerType": "local",
+		"python.linting.flake8Enabled": true,
+		"python.linting.enabled": true
+	}
+}
