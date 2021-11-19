@@ -103,6 +103,10 @@ def test_add_dataset_tags(tag_svc: TagService):
             "name": "add1",
             "confidence": 0.50,
             "event_id": tagging_event.uid,
+            "locator": {
+                "spec": "test_locator",
+                "path": ["foo", "bar"]
+            }
     })
     req = TagPatchRequest(add_tags=[new_tag], remove_tags=[])
     added_tags_uids = tag_svc.modify_tags(req, dataset.uid)
@@ -150,10 +154,18 @@ new_dataset = Dataset(**{
             "name": "rods",
             "confidence": 0.9008,
             "event_id": None,
+            "locator": {
+                "spec": "test_locator",
+                "path": ["foo", "bar"]
+            }
         },
         {
             "name": "peaks",
             "confidence": 0.001,
+            "locator": {
+                "spec": "test_locator",
+                "path": "simple path"
+            }
         },
         {
             "name": "reflection",
