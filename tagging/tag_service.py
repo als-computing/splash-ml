@@ -1,14 +1,11 @@
 import uuid
-from typing import Iterator, List
-from operator import attrgetter
-from pydantic import parse_obj_as
-from uuid import UUID, uuid4
+from typing import Iterator, List, Tuple
+from uuid import uuid4
 
 from pymongo.mongo_client import MongoClient
 
 from .model import (
     Dataset,
-    Tag,
     TagPatchRequest,
     TagSource,
     TaggingEvent
@@ -127,7 +124,7 @@ class TagService():
         self._clean_mongo_ids(dataset_dict)
         return dataset
 
-    def modify_tags(self, req: TagPatchRequest, dataset_uid: str) -> (List[str], List[str]):
+    def modify_tags(self, req: TagPatchRequest, dataset_uid: str) -> Tuple[List[str], List[str]]:
         """ Add new set of tags or deletes a list of tags from an existing data set with the given uid.
         Parameters
         ----------
@@ -179,9 +176,11 @@ class TagService():
                 removed_tags_uid = ['-1'] * len(tags2remove)
             else:
                 result = self._collection_dataset.update_many({'uid': dataset_uid},
-                                                              {"$pull": {'tags':
-                                                                             {'uid': {'$in': tags2remove}}
-                                                                         }})
+                                                              {
+                                                                  "$pull": {
+                                                                    'tags': {'uid': {'$in': tags2remove}}
+                                                                    }
+                                                              })
                 removed_tags_uid = tags2remove
                 # if the number of deleted elements does not match the number of tags,
                 # finds the tag UIDs that were not deleted
@@ -234,12 +233,12 @@ class TagService():
         return Dataset(**doc_tags)
 
     def find_datasets(
-        self, 
-        uri: str=None,
-        tags: List[str]=None,
-        offset=0, 
-        limit=10, 
-        ) -> Iterator[Dataset]:
+        self,
+        uri: str = None,
+        tags: List[str] = None,
+        offset=0,
+        limit=10,
+            ) -> Iterator[Dataset]:
         # **search_filters) -> Iterator[Dataset]:
         """Find all TagSets matching search filters
 
@@ -319,7 +318,6 @@ class TagService():
     def _inject_uid(tagging_dict):
         if tagging_dict.get('uid') is None:
             tagging_dict['uid'] = str(uuid.uuid4())
-
 
     @staticmethod
     def _clean_mongo_ids(data):

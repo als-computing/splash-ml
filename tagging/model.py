@@ -1,9 +1,7 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Extra, Field, parse_obj_as
-from typing import Dict, List, Optional
-from random import getrandbits
-
+from pydantic import BaseModel, Extra, Field
+from typing import Any, Dict, List, Optional
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
 SCHEMA_VERSION = "1.2"
 DEFAULT_UID = "342e4568-e23b-12d3-a456-526714178000"
@@ -15,6 +13,11 @@ class Persistable(BaseModel):
 
 class ModelInfo(BaseModel):
     label_index: Optional[Dict[str, float]]
+
+
+class Locator(BaseModel):
+    spec: str = Field(description="Description of the specification for this locator")
+    path: Any = Field(description="Locator information defined by the spec field")
 
 
 class TagSource(Persistable):
@@ -40,21 +43,22 @@ class TaggingEvent(Persistable):
 class Tag(BaseModel):
     uid: str = DEFAULT_UID
     name: str = Field(description="name of the tag")
-    locator: Optional[str] = Field(description="optional location information, " \
-                            "for indicating a part of a dataset that this tag applies to")
+    locator: Optional[Locator] = Field(description="optional location information, "
+                                                   "for indicating a subset of a dataset that this tag applies to")
+
     confidence: Optional[float] = Field(description="confidence provided for this tag")
     event_id: Optional[str] = Field(description="id of event where this tag was created")
 
 
 class DatasetType(str, Enum):
-    dbroker = "dbroker"
+    tiled = "tiled"
     file = "file"
     web = "web"
 
 
 class DatasetCollection(Persistable):
     assets: List[str]
-    models: Dict[str, int] # model and the quality of that model when run against a model
+    models: Dict[str, int]  # model and the quality of that model when run against a model
 
 
 class Dataset(BaseModel):
@@ -69,7 +73,7 @@ class Dataset(BaseModel):
     class Config:
         extra = Extra.forbid
 
- 
+
 class FileDataset(Dataset):
     type = DatasetType.file
 
@@ -77,4 +81,3 @@ class FileDataset(Dataset):
 class TagPatchRequest(BaseModel):
     add_tags: Optional[List[Tag]]
     remove_tags: Optional[List[str]]
-

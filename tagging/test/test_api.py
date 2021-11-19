@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 from mongomock import MongoClient
 import pytest
-import json
 
 from ..api import (
     app,

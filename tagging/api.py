@@ -1,18 +1,17 @@
-from enum import Enum
 import logging
 from typing import List, Optional
-import graphene
+# import graphene
 
 from fastapi import FastAPI, Query as FastQuery, HTTPException
-from pydantic import BaseModel, parse_obj_as
-from starlette.graphql import GraphQLApp
+from pydantic import BaseModel
+# from starlette.graphql import GraphQLApp
 from starlette.config import Config
 
-from .query import (
-    Query,
-    # Mutation,
-    context as query_context
-)
+# from .query import (
+#     Query,
+#     # Mutation,
+#     context as query_context
+# )
 
 
 from .model import (
@@ -29,6 +28,7 @@ logger = logging.getLogger('splash_ml')
 
 
 DEFAULT_PAGE_SIZE = 20
+
 
 def init_logging():
     ch = logging.StreamHandler()
@@ -49,10 +49,10 @@ API_URL_PREFIX = "/api/v0"
 
 init_logging()
 
-app = FastAPI(    
+app = FastAPI(
     openapi_url="/api/splash_ml/openapi.json",
     docs_url="/api/splash_ml/docs",
-    redoc_url="/api/splash_ml/redoc",)
+    redoc_url="/api/splash_ml/redoc")
 
 
 svc_context = Context()
@@ -65,10 +65,10 @@ async def startup_event():
     db = MongoClient(MONGO_DB_URI)
     tag_svc = TagService(db)
     svc_context.tag_svc = tag_svc
-    query_context.tag_svc = tag_svc
+    # query_context.tag_svc = tag_svc
 
 
-app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , mutation=Mutation)))
+# app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , mutation=Mutation)))
 
 
 class CreateResponseModel(BaseModel):
@@ -86,7 +86,7 @@ def add_dataset(dataset: Dataset):
     return CreateResponseModel(uid=new_dataset.uid)
 
 
-@app.get(API_URL_PREFIX + '/datasets', tags=['datasets'])
+@app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])
 def get_datasets(
     uri: Optional[str] = None,
     tags: Optional[List[str]] = FastQuery(None),
@@ -94,10 +94,7 @@ def get_datasets(
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
 
 ) -> List[Dataset]:
-
-
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
-
     Args:
         uri (Optional[str], optional): find dataset based on uri. Defaults to None.
         tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
@@ -110,13 +107,17 @@ def get_datasets(
     return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
 
 
-@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateTagPatchResponse)
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
+           tags=['datasets', 'tags'],
+           response_model=CreateTagPatchResponse)
 def modify_tags(uid: str, req: TagPatchRequest):
     added_tags_uid, removed_tags_uid = svc_context.tag_svc.modify_tags(req, uid)
     return CreateTagPatchResponse(added_tags_uid=added_tags_uid, removed_tags_uid=removed_tags_uid)
 
 
-@app.patch(API_URL_PREFIX + '/datasets/{uid}/metadata', tags=['datasets', 'metadata'], response_model=CreateResponseModel)
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/metadata',
+           tags=['datasets', 'metadata'],
+           response_model=CreateResponseModel)
 def add_tags(uid: str, tags: List[Tag]):
     raise HTTPException(405, detail="support for patching metadata is future")
     # new_asset = svc_context.tag_svc.add_metadata(tags, uid)
@@ -139,6 +140,7 @@ def get_tag_sources():
 def add_event(event: TaggingEvent):
     new_event = svc_context.tag_svc.create_event(event)
     return CreateResponseModel(new_event.uid)
+
 
 if __name__ == '__main__':
     import uvicorn
