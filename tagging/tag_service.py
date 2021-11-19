@@ -304,7 +304,7 @@ class TagService():
 
         self._collection_dataset.create_index([
            ('tags.uid', 1),
-        ], unique=True)
+        ], unique=True, sparse=True)
 
         self._collection_dataset.create_index([
             ('tags.confidence', 1),
