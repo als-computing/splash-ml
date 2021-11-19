@@ -72,7 +72,9 @@ def test_create_and_find_tagger(tag_svc: TagService):
 
 def test_create_and_find_tagging_event(tag_svc: TagService):
     tagger = tag_svc.create_tag_source(new_tagger)
-    tagging_event = tag_svc.create_tagging_event(TaggingEvent(tagger_id=tagger.uid, run_time=datetime.datetime.now()))
+    tagging_event = tag_svc.create_tagging_event(TaggingEvent(
+                                                    tagger_id=tagger.uid,
+                                                    run_time=datetime.datetime.now()))
 
     return_tagging_event = tag_svc.retrieve_tagging_event(tagging_event.uid)
     assert tagging_event.uid == return_tagging_event.uid

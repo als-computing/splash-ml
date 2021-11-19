@@ -107,13 +107,17 @@ def get_datasets(
     return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
 
 
-@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags', tags=['datasets', 'tags'], response_model=CreateTagPatchResponse)
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
+           tags=['datasets', 'tags'],
+           response_model=CreateTagPatchResponse)
 def modify_tags(uid: str, req: TagPatchRequest):
     added_tags_uid, removed_tags_uid = svc_context.tag_svc.modify_tags(req, uid)
     return CreateTagPatchResponse(added_tags_uid=added_tags_uid, removed_tags_uid=removed_tags_uid)
 
 
-@app.patch(API_URL_PREFIX + '/datasets/{uid}/metadata', tags=['datasets', 'metadata'], response_model=CreateResponseModel)
+@app.patch(API_URL_PREFIX + '/datasets/{uid}/metadata',
+           tags=['datasets', 'metadata'],
+           response_model=CreateResponseModel)
 def add_tags(uid: str, tags: List[Tag]):
     raise HTTPException(405, detail="support for patching metadata is future")
     # new_asset = svc_context.tag_svc.add_metadata(tags, uid)
