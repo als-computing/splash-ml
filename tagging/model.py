@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Extra, Field
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
 SCHEMA_VERSION = "1.2"
 DEFAULT_UID = "342e4568-e23b-12d3-a456-526714178000"

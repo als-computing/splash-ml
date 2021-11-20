@@ -3,7 +3,6 @@ from pymongo import MongoClient
 
 from starlette.config import Config
 
-from .model import Dataset, Locator, Tag
 from .tag_service import TagService
 
 
@@ -16,7 +15,7 @@ db = MongoClient(MONGO_DB_URI)
 tag_svc = TagService(db)
 
 
-type_defs = """
+type_defs = gql("""
 
     type Query {
         datasets(tags: [String], uri: String): [Dataset]!
@@ -56,12 +55,11 @@ type_defs = """
         tags: [Tag]
     }
 
-"""
-
+""")
 
 query = QueryType()
 
- 
+
 @query.field("datasets")
 def resolve_datasets(*_, tags=None, uri=None):
     datasets = list(tag_svc.find_datasets(tags=tags, uri=uri))
@@ -69,20 +67,4 @@ def resolve_datasets(*_, tags=None, uri=None):
 
 
 dataset = ObjectType("Dataset")
-
-
-# @dataset.field("tags")
-# def resolve_tags(dataset: Dataset, *_) -> Tag:
-#     return dataset.tags
-
-# tag = ObjectType("Locator")
-
-
-# @tag.field("path")
-# def resolve_locator(path, *_):
-#     return str(path)
-
-
-
-
 schema = make_executable_schema(type_defs, query, dataset)
