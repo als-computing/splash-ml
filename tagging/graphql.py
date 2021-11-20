@@ -59,11 +59,15 @@ type_defs = gql("""
 
 query = QueryType()
 
+class DatasetResolver():
 
-@query.field("datasets")
-def resolve_datasets(*_, tags=None, uri=None):
-    datasets = list(tag_svc.find_datasets(tags=tags, uri=uri))
-    return datasets
+    def __init__(self, tag_svc):
+        self._tag_svc = tag_svc
+
+    @query.field("datasets")
+    def __call__(self, *_, tags=None, uri=None):
+        datasets = list(tag_svc.find_datasets(tags=tags, uri=uri))
+        return datasets
 
 
 dataset = ObjectType("Dataset")

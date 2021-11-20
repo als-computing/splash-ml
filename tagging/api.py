@@ -6,7 +6,7 @@ from fastapi import FastAPI, Query as FastQuery, HTTPException
 from pydantic import BaseModel
 from starlette.config import Config
 
-from .graphql import schema
+from .graphql import schema, DatasetResolver
 
 # from .query import (
 #     Query,
@@ -66,10 +66,11 @@ async def startup_event():
     db = MongoClient(MONGO_DB_URI)
     tag_svc = TagService(db)
     svc_context.tag_svc = tag_svc
-    # query_context.tag_svc = tag_svc
-
+    DatasetResolver(tag_svc)
 
 app.add_route('/graphql', GraphQL(schema=schema, debug=True))
+
+
 
 
 class CreateResponseModel(BaseModel):
