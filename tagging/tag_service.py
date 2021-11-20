@@ -229,6 +229,8 @@ class TagService():
             dataset set dictionary corresponding to the uid
         """
         doc_tags = self._collection_dataset.find_one({'uid': uid})
+        if not doc_tags:
+            return None
         self._clean_mongo_ids(doc_tags)
         return Dataset(**doc_tags)
 

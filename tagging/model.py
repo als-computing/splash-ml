@@ -17,7 +17,7 @@ class ModelInfo(BaseModel):
 
 class Locator(BaseModel):
     spec: str = Field(description="Description of the specification for this locator")
-    path: Any = Field(description="Locator information defined by the spec field")
+    path: List[str] = Field(description="Locator information defined by the spec field")
 
 
 class TagSource(Persistable):
@@ -66,8 +66,6 @@ class Dataset(BaseModel):
     schema_version: str = SCHEMA_VERSION
     type: DatasetType
     uri: str
-    location_kwargs: Optional[Dict[str, str]]
-    sample_id: Optional[str]
     tags: Optional[List[Tag]]
 
     class Config:

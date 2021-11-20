@@ -1,11 +1,12 @@
 import logging
 from typing import List, Optional
-# import graphene
+from ariadne.asgi import GraphQL
 
 from fastapi import FastAPI, Query as FastQuery, HTTPException
 from pydantic import BaseModel
-# from starlette.graphql import GraphQLApp
 from starlette.config import Config
+
+from .graphql import schema
 
 # from .query import (
 #     Query,
@@ -68,7 +69,7 @@ async def startup_event():
     # query_context.tag_svc = tag_svc
 
 
-# app.add_route('/graphql', GraphQLApp(schema=graphene.Schema(query=Query)))  # , mutation=Mutation)))
+app.add_route('/graphql', GraphQL(schema=schema, debug=True))
 
 
 class CreateResponseModel(BaseModel):
