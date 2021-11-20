@@ -148,7 +148,6 @@ def test_remove_nonexistent_tag(tag_svc: TagService):
 
 
 new_dataset = Dataset(**{
-    "sample_id": "house paint 1234",
     "type": DatasetType.file,
     "uri": "images/test.tiff",
     "tags": [
