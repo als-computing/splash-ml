@@ -50,7 +50,7 @@ jobs:
         pytest
   
   container_webservice:
-    needs: test
+    needs: build
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
