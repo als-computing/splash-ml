@@ -59,6 +59,7 @@ type_defs = gql("""
 
 query = QueryType()
 
+
 class DatasetResolver():
 
     def __init__(self, tag_svc):

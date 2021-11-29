@@ -71,8 +71,6 @@ async def startup_event():
 app.add_route('/graphql', GraphQL(schema=schema, debug=True))
 
 
-
-
 class CreateResponseModel(BaseModel):
     uid: str
 
