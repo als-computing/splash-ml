@@ -4,8 +4,7 @@ import pytest
 
 from ..api import (
     app,
-    API_URL_PREFIX,
-    svc_context)
+    API_URL_PREFIX)
 
 from ..model import (
     Dataset,
@@ -15,19 +14,19 @@ from ..model import (
 )
 from ..tag_service import TagService
 
-db = MongoClient().tagdb
-tag_svc = TagService(db)
-svc_context.tag_svc = tag_svc
+# db = MongoClient().tagdb
+# tag_svc = TagService(db)
+# svc_context.tag_svc = tag_svc
 
 
-@pytest.fixture
-def mongodb():
-    return db
+# @pytest.fixture
+# def mongodb():
+#     return db
 
 
-@pytest.fixture
-def rest_client(mongodb):
-    return TestClient(app)
+# @pytest.fixture
+# def rest_client(mongodb):
+#     return TestClient(app)
 
 
 def test_taggers(rest_client: TestClient):

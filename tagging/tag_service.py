@@ -328,12 +328,12 @@ class TagService():
             del data['_id']
 
 
-class Context():
-    db: MongoClient = None
-    tag_svc: TagService = None
+# class Context():
+#     db: MongoClient = None
+#     tag_svc: TagService = None
 
 
-context = Context()
+# context = Context()
 
 
 class BadDataError(Exception):

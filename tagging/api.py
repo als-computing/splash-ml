@@ -6,13 +6,7 @@ from fastapi import FastAPI, Query as FastQuery, HTTPException
 from pydantic import BaseModel
 from starlette.config import Config
 
-from .graphql import schema, DatasetResolver
-
-# from .query import (
-#     Query,
-#     # Mutation,
-#     context as query_context
-# )
+from .graphql import schema, set_gql_tag_service
 
 
 from .model import (
@@ -23,7 +17,7 @@ from .model import (
     TagPatchRequest
 )
 
-from .tag_service import TagService, Context
+from .tag_service import TagService
 
 logger = logging.getLogger('splash_ml')
 
@@ -56,17 +50,19 @@ app = FastAPI(
     redoc_url="/api/splash_ml/redoc")
 
 
-svc_context = Context()
-
-
 @app.on_event("startup")
 async def startup_event():
     from pymongo import MongoClient
     logger.debug('!!!!!!!!!starting server')
     db = MongoClient(MONGO_DB_URI)
-    tag_svc = TagService(db)
-    svc_context.tag_svc = tag_svc
-    DatasetResolver(tag_svc)
+    set_tag_service(TagService(db))
+    set_gql_tag_service(tag_svc)
+
+
+def set_tag_service(new_tag_svc: TagService):
+    global tag_svc
+    tag_svc = new_tag_svc
+
 
 app.add_route('/graphql', GraphQL(schema=schema, debug=True))
 
@@ -82,7 +78,7 @@ class CreateTagPatchResponse(BaseModel):
 
 @app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
 def add_dataset(dataset: Dataset):
-    new_dataset = svc_context.tag_svc.create_dataset(dataset)
+    new_dataset = tag_svc.create_dataset(dataset)
     return CreateResponseModel(uid=new_dataset.uid)
 
 
@@ -104,14 +100,14 @@ def get_datasets(
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return svc_context.tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
+    return tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
 
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
            tags=['datasets', 'tags'],
            response_model=CreateTagPatchResponse)
 def modify_tags(uid: str, req: TagPatchRequest):
-    added_tags_uid, removed_tags_uid = svc_context.tag_svc.modify_tags(req, uid)
+    added_tags_uid, removed_tags_uid = tag_svc.modify_tags(req, uid)
     return CreateTagPatchResponse(added_tags_uid=added_tags_uid, removed_tags_uid=removed_tags_uid)
 
 
@@ -120,25 +116,25 @@ def modify_tags(uid: str, req: TagPatchRequest):
            response_model=CreateResponseModel)
 def add_tags(uid: str, tags: List[Tag]):
     raise HTTPException(405, detail="support for patching metadata is future")
-    # new_asset = svc_context.tag_svc.add_metadata(tags, uid)
+    # new_asset = tag_svc.add_metadata(tags, uid)
     # return CreateResponseModel(uid=new_asset.uid)
 
 
 @app.post(API_URL_PREFIX + '/tagsources', tags=['tag sources'], response_model=CreateResponseModel)
 def add_tag_source(asset: TagSource):
-    new_tagger = svc_context.tag_svc.create_tag_source(asset)
+    new_tagger = tag_svc.create_tag_source(asset)
     return CreateResponseModel(uid=new_tagger.uid)
 
 
 @app.get(API_URL_PREFIX + '/tagsources', tags=['tag sources'], response_model=List[TagSource])
 def get_tag_sources():
-    tag_sources = svc_context.tag_svc.find_tag_sources()
+    tag_sources = tag_svc.find_tag_sources()
     return tag_sources
 
 
 @app.post(API_URL_PREFIX + '/events', tags=['events'], response_model=CreateResponseModel)
 def add_event(event: TaggingEvent):
-    new_event = svc_context.tag_svc.create_event(event)
+    new_event = tag_svc.create_event(event)
     return CreateResponseModel(new_event.uid)
 
 

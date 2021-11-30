@@ -7,27 +7,21 @@ from ..tag_service import TagService
 from ..model import (
     SCHEMA_VERSION,
     Dataset,
-    DatasetType,
     Tag,
     TagPatchRequest,
     TagSource,
     TaggingEvent
 )
 
+from .data import (
+    json_datetime,
+    new_dataset,
+    new_tagging_event,
+    new_tagger,
+    no_tag_dataset,
+    no_tag
+)
 
-def json_datetime(unix_timestamp):
-    return datetime.datetime.utcfromtimestamp(unix_timestamp).isoformat() + "Z"
-
-
-@pytest.fixture
-def mongodb():
-    return mongomock.MongoClient().db
-    # return pymongo.MongoClient()
-
-
-@pytest.fixture
-def tag_svc(mongodb):
-    return TagService(mongodb)
 
 
 def test_unique_uid_tag_set(tag_svc: TagService):
@@ -94,8 +88,13 @@ def test_create_and_find_asset(tag_svc: TagService):
             assert tag.event_id == "import_id1"
 
     returns_asset_from_search = list(tag_svc.find_datasets(tags=["rods"]))
-    assert len(returns_asset_from_search) == 1
-    assert return_asset == returns_asset_from_search[0], "Search and retrieve return same"
+    assert len(returns_asset_from_search) > 0
+    found_asset = False
+    for return_asset in returns_asset_from_search:
+        if return_asset == returns_asset_from_search[0]:
+            found_asset = True
+            break
+    assert found_asset, "Search and retrieve return same"
 
 
 def test_add_dataset_tags(tag_svc: TagService):
@@ -145,64 +144,3 @@ def test_remove_nonexistent_tag(tag_svc: TagService):
     req = TagPatchRequest(add_tags=[], remove_tags=remove_tags_uids)
     deleted_tags_uids = tag_svc.modify_tags(req, dataset.uid)
     assert deleted_tags_uids[1][0] == '-1'
-
-
-new_dataset = Dataset(**{
-    "type": DatasetType.file,
-    "uri": "images/test.tiff",
-    "tags": [
-        {
-            "name": "rods",
-            "confidence": 0.9008,
-            "event_id": None,
-            "locator": {
-                "spec": "test_locator",
-                "path": ["foo", "bar"]
-            }
-        },
-        {
-            "name": "peaks",
-            "confidence": 0.001,
-            "locator": {
-                "spec": "test_locator",
-                "path": "simple path"
-            }
-        },
-        {
-            "name": "reflection",
-            "confidence": 1,
-            "event_id": "import_id1",
-        }
-    ]
-})
-
-
-# name didnt change, though it doesnt carry model_name anymore
-new_tagging_event = TaggingEvent(**{
-    "tagger_id": "Tricia McMillin",
-    "run_time": json_datetime(1134433.223),
-    "accuracy": 0.7776
-})
-
-
-new_tagger = TagSource(**{
-    "type": "model",
-    "name": "PyTestNet",
-    "model_info": {
-        "label_index": {
-            "blue": 1,
-            "red": 2
-        }
-    }
-})
-
-no_tag_dataset = Dataset(**{
-    "type": "file",
-    "uri": "blahblahblah"
-})
-
-
-no_tag = Tag(**{
-    "name": "rod",
-    "tags": None
-})
