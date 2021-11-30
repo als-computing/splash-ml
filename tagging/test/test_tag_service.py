@@ -2,7 +2,7 @@ import datetime
 import pytest
 
 from pymongo.errors import DuplicateKeyError
-import mongomock
+
 from ..tag_service import TagService
 from ..model import (
     SCHEMA_VERSION,
@@ -21,7 +21,6 @@ from .data import (
     no_tag_dataset,
     no_tag
 )
-
 
 
 def test_unique_uid_tag_set(tag_svc: TagService):

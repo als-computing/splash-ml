@@ -1,7 +1,4 @@
 from ariadne import ObjectType, QueryType, gql, make_executable_schema
-from pymongo import MongoClient
-
-from starlette.config import Config
 
 from .tag_service import TagService
 

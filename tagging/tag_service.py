@@ -2,8 +2,6 @@ import uuid
 from typing import Iterator, List, Tuple
 from uuid import uuid4
 
-from pymongo.mongo_client import MongoClient
-
 from .model import (
     Dataset,
     TagPatchRequest,

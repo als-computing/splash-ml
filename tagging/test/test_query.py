@@ -3,14 +3,7 @@ import pytest
 
 from tagging.tag_service import TagService
 
-from .data import (
-    json_datetime,
-    new_dataset,
-    new_tagging_event,
-    new_tagger,
-    no_tag_dataset,
-    no_tag
-)
+from .data import new_dataset
 
 
 @pytest.fixture

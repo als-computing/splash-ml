@@ -6,6 +6,7 @@ from tagging.api import app, set_tag_service
 from tagging.tag_service import TagService
 from tagging.graphql import set_gql_tag_service
 
+
 @pytest.fixture(scope="module")
 def mongodb():
     return mongomock.MongoClient().db
@@ -22,4 +23,3 @@ def rest_client(tag_svc):
     set_tag_service(tag_svc)
     set_gql_tag_service(tag_svc)
     return TestClient(app)
-

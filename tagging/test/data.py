@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from ..model import (
-    SCHEMA_VERSION,
     Dataset,
     DatasetType,
     Tag,
@@ -9,8 +8,10 @@ from ..model import (
     TaggingEvent
 )
 
+
 def json_datetime(unix_timestamp):
     return datetime.utcfromtimestamp(unix_timestamp).isoformat() + "Z"
+
 
 new_dataset = Dataset(**{
     "type": DatasetType.file,
