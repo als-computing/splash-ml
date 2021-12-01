@@ -1,0 +1,31 @@
+# Sample docker-compose file for setting up a mongo instance alongside a splash-ml instance
+version: "3"
+services:
+  db:
+    image: mongo:4.2
+    hostname: mongo
+    container_name: db
+    environment:
+      - TZ=US/Pacific
+    expose:
+      - 27017
+    ports:
+      - 27017:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all"]
+    # You probably want to uncomment this and persist outside of the container
+    # volumes:
+    #   - ${MONGO_DB_LOC}:/data/db
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    environment:
+      APP_MODULE: "tagging.api:app"
+      LOGLEVEL: DEBUG
+      MONGO_DB_URI: mongodb://db:27017
+      MAX_WORKERS: 1
+    ports:
+      - 8087:80

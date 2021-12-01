@@ -1,11 +1,6 @@
 from fastapi.testclient import TestClient
-from mongomock import MongoClient
-import pytest
 
-from ..api import (
-    app,
-    API_URL_PREFIX,
-    svc_context)
+from ..api import API_URL_PREFIX
 
 from ..model import (
     Dataset,
@@ -13,25 +8,9 @@ from ..model import (
     TagSource,
     TagPatchRequest
 )
-from ..tag_service import TagService
-
-db = MongoClient().tagdb
-tag_svc = TagService(db)
-svc_context.tag_svc = tag_svc
-
-
-@pytest.fixture
-def mongodb():
-    return db
-
-
-@pytest.fixture
-def rest_client(mongodb):
-    return TestClient(app)
 
 
 def test_taggers(rest_client: TestClient):
-
     response = rest_client.post(API_URL_PREFIX + "/tagsources", json=tag_source_1_dict)
     response = rest_client.post(API_URL_PREFIX + "/tagsources", json=tag_source_2_dict)
     response: TagSource = rest_client.get(API_URL_PREFIX + "/tagsources")

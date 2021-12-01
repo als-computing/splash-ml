@@ -2,8 +2,6 @@ import uuid
 from typing import Iterator, List, Tuple
 from uuid import uuid4
 
-from pymongo.mongo_client import MongoClient
-
 from .model import (
     Dataset,
     TagPatchRequest,
@@ -229,6 +227,8 @@ class TagService():
             dataset set dictionary corresponding to the uid
         """
         doc_tags = self._collection_dataset.find_one({'uid': uid})
+        if not doc_tags:
+            return None
         self._clean_mongo_ids(doc_tags)
         return Dataset(**doc_tags)
 
@@ -326,12 +326,12 @@ class TagService():
             del data['_id']
 
 
-class Context():
-    db: MongoClient = None
-    tag_svc: TagService = None
+# class Context():
+#     db: MongoClient = None
+#     tag_svc: TagService = None
 
 
-context = Context()
+# context = Context()
 
 
 class BadDataError(Exception):

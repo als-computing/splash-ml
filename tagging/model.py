@@ -66,8 +66,6 @@ class Dataset(BaseModel):
     schema_version: str = SCHEMA_VERSION
     type: DatasetType
     uri: str
-    location_kwargs: Optional[Dict[str, str]]
-    sample_id: Optional[str]
     tags: Optional[List[Tag]]
 
     class Config:
