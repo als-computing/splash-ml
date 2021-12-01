@@ -23,7 +23,7 @@ logger = logging.getLogger('splash_ml')
 
 
 DEFAULT_PAGE_SIZE = 20
-GRAPHQL_URL = "/splash-ml/graphql"
+GRAPHQL_URL = "/splash_ml/graphql"
 
 
 def init_logging():
