@@ -4,7 +4,7 @@ import pytest
 from tagging.tag_service import TagService
 
 from .data import new_dataset
-
+from tagging.api import GRAPHQL_URL
 
 @pytest.fixture
 def load_datasets(tag_svc: TagService):
@@ -13,7 +13,7 @@ def load_datasets(tag_svc: TagService):
 
 @pytest.mark.usefixtures("load_datasets")
 def test_query_uri(rest_client: TestClient):
-    response = rest_client.post("/graphql", json={'query': query_by_uri})
+    response = rest_client.post(GRAPHQL_URL, json={'query': query_by_uri})
     assert response.status_code == 200, f"oops {response.text}"
     assert response.json().get('errors') is None, f"errors found {response.json()['errors']}"
     datasets = response.json()['data']['datasets']
@@ -22,7 +22,7 @@ def test_query_uri(rest_client: TestClient):
 
 @pytest.mark.usefixtures("load_datasets")
 def test_query_tags(rest_client: TestClient):
-    response = rest_client.post("/graphql", json={'query': query_by_tags})
+    response = rest_client.post(GRAPHQL_URL, json={'query': query_by_tags})
     assert response.status_code == 200, f"oops {response.text}"
     assert response.json().get('errors') is None, f"errors found {response.json()['errors']}"
     datasets = response.json()['data']['datasets']

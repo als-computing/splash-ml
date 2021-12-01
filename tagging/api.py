@@ -23,7 +23,7 @@ logger = logging.getLogger('splash_ml')
 
 
 DEFAULT_PAGE_SIZE = 20
-
+GRAPHQL_URL = "/splash-ml/graphql"
 
 def init_logging():
     ch = logging.StreamHandler()
@@ -64,7 +64,7 @@ def set_tag_service(new_tag_svc: TagService):
     tag_svc = new_tag_svc
 
 
-app.add_route('/splash-ml/graphql', GraphQL(schema=schema, debug=True))
+app.add_route(GRAPHQL_URL, GraphQL(schema=schema, debug=True))
 
 
 class CreateResponseModel(BaseModel):
