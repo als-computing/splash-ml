@@ -293,7 +293,7 @@ class TagService():
         self._collection_tagging_event.create_index([
             ('uid', 1)
         ], unique=True)
-        
+
         self._collection_tagging_event.create_index([
             ('uri', 1)
         ], unique=True)
