@@ -6,6 +6,7 @@ from tagging.tag_service import TagService
 from .data import new_dataset
 from tagging.api import GRAPHQL_URL
 
+
 @pytest.fixture
 def load_datasets(tag_svc: TagService):
     tag_svc.create_dataset(new_dataset)
