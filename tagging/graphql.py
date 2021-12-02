@@ -5,7 +5,7 @@ from .tag_service import TagService
 type_defs = gql("""
 
     type Query {
-        datasets(tags: [String], uri: String): [Dataset]!
+        datasets(uri: String, tags: [String], limit: Int, skip: Int): [Dataset]!
     }
 
 
@@ -34,6 +34,7 @@ type_defs = gql("""
         tagger: TagSource
     }
 
+
     type Dataset {
         " Dataset model "
         uri: String!
@@ -52,10 +53,10 @@ def set_gql_tag_service(new_tag_svc: TagService):
 
 
 @query.field("datasets")
-def resolve_datasets(self, *_, tags=None, uri=None):
-    datasets = list(tag_svc.find_datasets(tags=tags, uri=uri))
+def resolve_datasets(self, *_, tags=None, uri=None, limit=None, skip=0):
+    datasets = list(tag_svc.find_datasets(tags=tags, uri=uri, offset=skip, limit=limit))
     return datasets
 
 
 dataset = ObjectType("Dataset")
-schema = make_executable_schema(type_defs, query, dataset)
+schema = make_executable_schema(type_defs, query)
