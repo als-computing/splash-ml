@@ -37,7 +37,7 @@ query FindDataset{
     type
     tags {
       name
-      accuracy
+      confidence
       locator
     }
   }
@@ -50,7 +50,7 @@ query FindDatasets{
     type
     tags {
       name
-      accuracy
+      confidence
       locator
     }
   }

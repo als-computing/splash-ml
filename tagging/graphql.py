@@ -20,7 +20,7 @@ type_defs = gql("""
         uid: String
         name: String!
         locator: String
-        accuracy: Float
+        confidence: Float
     }
 
     type TagSource{
