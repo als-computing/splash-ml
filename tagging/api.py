@@ -85,7 +85,7 @@ def add_dataset(dataset: Dataset):
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])
 def get_datasets(
-    uris: Optional[List[str]] = None,
+    uris: Optional[List[str]] = FastQuery(None),
     tags: Optional[List[str]] = FastQuery(None),
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
