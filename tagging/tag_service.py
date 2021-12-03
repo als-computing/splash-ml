@@ -234,7 +234,7 @@ class TagService():
 
     def find_datasets(
         self,
-        uri: str = None,
+        uris: List[str] = None,
         tags: List[str] = None,
         offset=0,
         limit=10,
@@ -257,9 +257,9 @@ class TagService():
             subqueries.append(
                 {"tags.name": {"$in": tags}})
 
-        if uri:
+        if uris:
             subqueries.append(
-                {"uri": uri}
+                {"uri": {"$in": uris}}
             )
 
         if len(subqueries) > 0:

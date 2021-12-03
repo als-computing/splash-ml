@@ -32,7 +32,7 @@ def test_query_tags(rest_client: TestClient):
 
 query_by_uri = """
 query FindDataset{
-  datasets(uri: "images/test.tiff"){
+  datasets(uris: ["images/test.tiff"]){
     uri
     type
     tags {

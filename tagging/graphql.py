@@ -5,7 +5,7 @@ from .tag_service import TagService
 type_defs = gql("""
 
     type Query {
-        datasets(uri: String, tags: [String], limit: Int, skip: Int): [Dataset]!
+        datasets(uris: [String], tags: [String], limit: Int, skip: Int): [Dataset]!
     }
 
 
@@ -37,6 +37,7 @@ type_defs = gql("""
 
     type Dataset {
         " Dataset model "
+        uid: String!
         uri: String!
         type: DatasetType!
         tags: [Tag]
@@ -53,8 +54,8 @@ def set_gql_tag_service(new_tag_svc: TagService):
 
 
 @query.field("datasets")
-def resolve_datasets(self, *_, tags=None, uri=None, limit=None, skip=0):
-    datasets = list(tag_svc.find_datasets(tags=tags, uri=uri, offset=skip, limit=limit))
+def resolve_datasets(self, *_, tags=None, uris=None, limit=10, skip=0):
+    datasets = list(tag_svc.find_datasets(tags=tags, uris=uris, offset=skip, limit=limit))
     return datasets
 
 

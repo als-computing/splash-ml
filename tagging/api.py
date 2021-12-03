@@ -85,7 +85,7 @@ def add_dataset(dataset: Dataset):
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])
 def get_datasets(
-    uri: Optional[str] = None,
+    uris: Optional[str] = None,
     tags: Optional[List[str]] = FastQuery(None),
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
@@ -101,7 +101,7 @@ def get_datasets(
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uri=uri, tags=tags)
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags)
 
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
