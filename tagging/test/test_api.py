@@ -4,7 +4,6 @@ from ..api import API_URL_PREFIX
 
 from ..model import (
     Dataset,
-    SearchDatasetsRequest,
     Tag,
     TagSource,
     TagPatchRequest

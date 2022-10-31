@@ -124,6 +124,7 @@ def get_datasets(
     """
     return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags)
 
+
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
            tags=['datasets', 'tags'],
            response_model=CreateTagPatchResponse)
