@@ -4,6 +4,7 @@ from ..api import API_URL_PREFIX
 
 from ..model import (
     Dataset,
+    SearchDatasetsRequest,
     Tag,
     TagSource,
     TagPatchRequest
@@ -26,7 +27,16 @@ def test_tags_and_datasets(rest_client: TestClient):
     # search on name
     response: Dataset = rest_client.get(
         API_URL_PREFIX + "/datasets",
-        params={"offset": 0, "limit": 10, "type": "file", "uri": "/foo/bar.h5"})
+        params={"page[offset]": 0, "page[limit]": 10, "uri": "/foo/bar.h5"})
+    assert response.status_code == 200, f"oops {response.text}"
+    tag_sources = response.json()
+    assert len(tag_sources) == 1
+
+    # search on name using the post method
+    response: Dataset = rest_client.post(
+        API_URL_PREFIX + "/datasets/search",
+        params={"page[offset]": 0, "page[limit]": 10},
+        json={'uris': ['/foo/bar.h5']})
     assert response.status_code == 200, f"oops {response.text}"
     tag_sources = response.json()
     assert len(tag_sources) == 1
