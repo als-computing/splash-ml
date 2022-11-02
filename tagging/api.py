@@ -11,6 +11,7 @@ from .graphql import schema, set_gql_tag_service
 
 from .model import (
     Dataset,
+    SearchDatasetsRequest,
     Tag,
     TagSource,
     TaggingEvent,
@@ -81,6 +82,26 @@ class CreateTagPatchResponse(BaseModel):
 def add_dataset(dataset: Dataset):
     new_dataset = tag_svc.create_dataset(dataset)
     return CreateResponseModel(uid=new_dataset.uid)
+
+
+@app.post(API_URL_PREFIX + '/datasets/search', tags=['datasets'], response_model=List[Dataset])
+def search_datasets(
+    search: SearchDatasetsRequest,
+    offset: Optional[int] = FastQuery(0, alias="page[offset]"),
+    limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
+
+) -> List[Dataset]:
+    """ Searches datasets based on query parameters. Provides pagine through skip and limit
+    Args:
+        uri (Optional[str], optional): find dataset based on uri. Defaults to None.
+        tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
+        skip (Optional[int], optional): [description]. Defaults to 0.
+        limit (Optional[int], optional): [description]. Defaults to 10.
+
+    Returns:
+        List[Dataset]: [Full object datasets corresponding to search parameters]
+    """
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags)
 
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])

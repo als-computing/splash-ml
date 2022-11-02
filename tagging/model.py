@@ -76,6 +76,11 @@ class FileDataset(Dataset):
     type = DatasetType.file
 
 
+class SearchDatasetsRequest(BaseModel):
+    uris: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+
+
 class TagPatchRequest(BaseModel):
     add_tags: Optional[List[Tag]]
     remove_tags: Optional[List[str]]

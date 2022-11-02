@@ -10,7 +10,7 @@ services:
     expose:
       - 27017
     ports:
-      - 27017:27017
+      - 127.0.0.1:27017:27017
     restart: always
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all"]
     # You probably want to uncomment this and persist outside of the container
