@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 
 from ..api import API_URL_PREFIX
@@ -19,6 +21,17 @@ def test_taggers(rest_client: TestClient):
 
 
 def test_tags_and_datasets(rest_client: TestClient):
+    # create a data project
+    response = rest_client.post(API_URL_PREFIX + "/projects", json=project)
+    assert response.status_code == 200
+    project_id = response.json()['uid']
+
+    # search data projects
+    response = rest_client.get(API_URL_PREFIX + "/projects")
+    assert response.status_code == 200
+    splash_project = response.json()[0]
+    assert project_id == splash_project['uid']
+
     # create a dataset
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
@@ -64,6 +77,18 @@ def test_tags_and_datasets(rest_client: TestClient):
         json=req.dict())
     assert response.status_code == 200, f"oops {response.text}"
 
+    # post new testing dataset
+    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset3)
+    assert response.status_code == 200
+
+    # get filtered datasets according to tagging event
+    tagging_uid = '12345'
+    response = rest_client.get(API_URL_PREFIX + f"/events/{tagging_uid}/datasets")
+    tagged_dataset = response.json()
+    assert response.status_code == 200
+    assert len(tagged_dataset)==1 
+    assert len(tagged_dataset[0]['tags'])==1
+
 
 def test_skip_limit(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
@@ -96,6 +121,12 @@ tag_source_2_dict = {
     "name": "slartibartfast"
 }
 
+project = {
+    "user_id": "tester",
+    "created": str(datetime.utcnow()),
+    "last_accessed": str(datetime.utcnow())
+}
+
 dataset = {
     "type": "file",
     "uri": "/foo/bar.h5",
@@ -107,4 +138,13 @@ dataset = {
 dataset2 = {
     "type": "file",
     "uri": "/foo/doi.h2",
+}
+
+dataset3 = {
+    "type": "file",
+    "uri": "/foo/bar.h2",
+    "tags": [
+        {"name": "label", "value": "peaks", "confidence": 0.9, "event_id": "12345"},
+        {"name": "label", "value": "rings", "confidence": 0.2, "event_id": "67891"},
+    ]
 }
