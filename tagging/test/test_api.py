@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi.testclient import TestClient
 
 from ..api import API_URL_PREFIX
@@ -108,12 +106,6 @@ tag_source_1_dict = {
 tag_source_2_dict = {
     "type": "human",
     "name": "slartibartfast"
-}
-
-project = {
-    "user_id": "tester",
-    "created": str(datetime.utcnow()),
-    "last_accessed": str(datetime.utcnow())
 }
 
 dataset = {

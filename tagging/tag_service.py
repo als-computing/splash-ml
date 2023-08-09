@@ -51,7 +51,6 @@ class TagService():
         self._db = client[db_name]
         self._collection_tag_sources = self._db.tag_source
         self._collection_tagging_event = self._db.tagging_event
-        self._collection_data_project = self._db.data_project
         self._collection_dataset = self._db.data_set
         self._create_indexes()
 
