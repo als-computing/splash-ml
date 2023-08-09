@@ -216,32 +216,6 @@ def get_events(tagger_id: Optional[str] = None,
     return events
 
 
-@app.post(API_URL_PREFIX + '/events/{uid}/datasets', tags=['events', 'datasets'], 
-         response_model=List[Dataset])
-def get_event_datasets(uid: str) -> List[Dataset]:
-    """ Searches datasets based tagging event uid
-    Args:
-        uid (str): find dataset based on tagging event uid
-    Returns:
-        List[Dataset]: [Full object datasets corresponding with filtered list of tags matching
-                        the tagging event uid]
-    """
-    return tag_svc.find_and_filter_datasets(uid)
-
-
-@app.get(API_URL_PREFIX + '/events/{uid}/datasets', tags=['events', 'datasets'], 
-         response_model=List[Dataset])
-def get_filtered_datasets(uid: str) -> List[Dataset]:
-    """ Searches datasets based tagging event uid
-    Args:
-        uid (str): find dataset based on tagging event uid
-    Returns:
-        List[Dataset]: [Full object datasets corresponding with filtered list of tags matching
-                        the tagging event uid]
-    """
-    return tag_svc.find_and_filter_datasets(uid)
-
-
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=8000)

@@ -81,13 +81,13 @@ def test_tags_and_datasets(rest_client: TestClient):
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset3)
     assert response.status_code == 200
 
-    # get filtered datasets according to tagging event
+    # get datasets according to tagging event
     tagging_uid = '12345'
-    response = rest_client.get(API_URL_PREFIX + f"/events/{tagging_uid}/datasets")
+    response = rest_client.get(API_URL_PREFIX + f"/datasets", params={'event_id': tagging_uid})
     tagged_dataset = response.json()
-    assert response.status_code == 200
-    assert len(tagged_dataset)==1 
-    assert len(tagged_dataset[0]['tags'])==1
+    assert response.status_code == 200, f"oops {response.text}"
+    assert len(tagged_dataset)==1               # only 1 data set matches this query
+    assert len(tagged_dataset[0]['tags']) == 2  # this data set has 2 tags
 
 
 def test_skip_limit(rest_client: TestClient):

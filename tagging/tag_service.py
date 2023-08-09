@@ -367,38 +367,6 @@ class TagService():
         for item in cursor:
             self._clean_mongo_ids(item)
             yield Dataset.parse_obj(item)
-    
-    def find_and_filter_datasets(self, tagging_event_uid: str) -> List[Dataset]:
-        """Find list of datasets with tags that match a given tagging event
-
-        Parameters
-        ----------
-        tagging_event_uid : str
-            uid of the tagging event of interest
-
-        Returns
-        -------
-        List[Dataset]
-            datasets with filtered list of tags that match the tagging event
-        """
-        cursor = self._collection_dataset.aggregate([
-            {"$match": {"tags.event_id": tagging_event_uid}},
-            {
-                "$addFields": {
-                    "filtered_tags" : {
-                        "$filter": {
-                            "input": "$tags", 
-                            "as": "tag", 
-                            "cond": {"$eq": ["$$tag.event_id", tagging_event_uid]}
-                        }
-                    }
-                }
-            },
-            { "$set" : { "tags": "$filtered_tags"}},
-            { "$project" : { "_id": 0 , "filtered_tags": 0}},
-        ])
-        for item in cursor:
-            yield Dataset.parse_obj(item)
 
     def _create_indexes(self):
         self._collection_tag_sources.create_index([
