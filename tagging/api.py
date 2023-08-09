@@ -11,6 +11,7 @@ from .graphql import schema, set_gql_tag_service
 
 from .model import (
     Dataset,
+    DataProject,
     SearchDatasetsRequest,
     Tag,
     TagSource,
@@ -89,40 +90,46 @@ def search_datasets(
     search: SearchDatasetsRequest,
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
-
 ) -> List[Dataset]:
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
     Args:
         uri (Optional[str], optional): find dataset based on uri. Defaults to None.
         tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
+        project (Optional[str], optional): find dataset based on project id
+        event_id (Optional[str], optional): find dataset based on event id
         skip (Optional[int], optional): [description]. Defaults to 0.
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags)
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags, \
+                                 project=search.project, event_id=search.event_id)
 
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])
 def get_datasets(
     uris: Optional[List[str]] = FastQuery(None),
     tags: Optional[List[str]] = FastQuery(None),
+    project: Optional[str] = FastQuery(None),
+    event_id: Optional[str] = FastQuery(None),
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
-
 ) -> List[Dataset]:
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
     Args:
-        uri (Optional[str], optional): find dataset based on uri. Defaults to None.
+        uris (Optional[List[str],] optional): find dataset based on uris. Defaults to None.
         tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
+        project (Optional[str], optional): find dataset based on project id
+        event_id (Optional[str], optional): find dataset based on event id
         skip (Optional[int], optional): [description]. Defaults to 0.
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags)
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags, project=project,\
+                                 event_id=event_id)
 
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
@@ -154,10 +161,85 @@ def get_tag_sources():
     return tag_sources
 
 
+@app.post(API_URL_PREFIX + '/projects', tags=['events'], response_model=CreateResponseModel)
+def add_project(project: DataProject):
+    new_project = tag_svc.create_data_project(project)
+    return CreateResponseModel(uid=new_project.uid)
+
+
+@app.get(API_URL_PREFIX + '/projects', tags=['events'], response_model=List[DataProject])
+def get_projects(user_id: Optional[str] = None,
+                 sort: Optional[bool] = False,
+                 offset: Optional[int] = FastQuery(0, alias="page[offset]"),
+                 limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")):
+    """ Searches projects based on query parameters. Provides pagine through skip and limit
+    Args:
+        user_id (Optional[str] optional): find projects based on user id. Defaults to None.
+        sort (Optional[bool], optional): sort queried projects based on last access timestamp. 
+                                         Defaults to False.
+        skip (Optional[int], optional): [description]. Defaults to 0.
+        limit (Optional[int], optional): [description]. Defaults to 10.
+
+    Returns:
+        List[DataProject]: [Full object data project corresponding to search parameters]
+    """
+    projects = tag_svc.find_project(user_id, sort, offset, limit)
+    return projects
+
+
 @app.post(API_URL_PREFIX + '/events', tags=['events'], response_model=CreateResponseModel)
 def add_event(event: TaggingEvent):
-    new_event = tag_svc.create_event(event)
-    return CreateResponseModel(new_event.uid)
+    new_event = tag_svc.create_tagging_event(event)
+    return CreateResponseModel(uid=new_event.uid)
+
+
+@app.get(API_URL_PREFIX + '/events/{uid}', tags=['events'], response_model=TaggingEvent)
+def get_event(uid):
+    event = tag_svc.retrieve_tagging_event(uid)
+    return event
+
+
+@app.get(API_URL_PREFIX + '/events', tags=['events'], response_model=List[TaggingEvent])
+def get_events(tagger_id: Optional[str] = None,
+               offset: Optional[int] = FastQuery(0, alias="page[offset]"),
+               limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")):
+    """ Searches tagging events based on query parameters. Provides pagine through skip and limit
+    Args:
+        tagger_id (Optional[str] optional): find tagging events based on tagger id. Defaults to None.
+        skip (Optional[int], optional): [description]. Defaults to 0.
+        limit (Optional[int], optional): [description]. Defaults to 10.
+
+    Returns:
+        List[TaggingEvent]: [Full object tagging event corresponding to search parameters]
+    """
+    events = tag_svc.find_tagging_event(tagger_id, offset, limit)
+    return events
+
+
+@app.post(API_URL_PREFIX + '/events/{uid}/datasets', tags=['events', 'datasets'], 
+         response_model=List[Dataset])
+def get_event_datasets(uid: str) -> List[Dataset]:
+    """ Searches datasets based tagging event uid
+    Args:
+        uid (str): find dataset based on tagging event uid
+    Returns:
+        List[Dataset]: [Full object datasets corresponding with filtered list of tags matching
+                        the tagging event uid]
+    """
+    return tag_svc.find_and_filter_datasets(uid)
+
+
+@app.get(API_URL_PREFIX + '/events/{uid}/datasets', tags=['events', 'datasets'], 
+         response_model=List[Dataset])
+def get_filtered_datasets(uid: str) -> List[Dataset]:
+    """ Searches datasets based tagging event uid
+    Args:
+        uid (str): find dataset based on tagging event uid
+    Returns:
+        List[Dataset]: [Full object datasets corresponding with filtered list of tags matching
+                        the tagging event uid]
+    """
+    return tag_svc.find_and_filter_datasets(uid)
 
 
 if __name__ == '__main__':
