@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from .model import (
     Dataset,
-    DataProject,
     TagPatchRequest,
     TagSource,
     TaggingEvent
@@ -95,25 +94,6 @@ class TagService():
         self._collection_tagging_event.insert_one(event_dict)
         self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
-
-    def create_data_project(self, project: DataProject) -> DataProject:
-        """ Create a new data project.  The uid for this project will label
-        a data project that reference a collection of data sets.
-
-        Parameters
-        ----------
-        project : NewDataProject
-
-        Returns
-        ----------
-        DataProject
-            DataProject object, with uid in it
-        """
-        project_dict = project.dict()
-        self._inject_uid(project_dict)
-        self._collection_data_project.insert_one(project_dict)
-        self._clean_mongo_ids(project_dict)
-        return DataProject(**project_dict)
     
     def create_dataset(self, dataset: Dataset) -> Dataset:
         """ Create a new dataset.  The uid for this dataset distinguishes
@@ -268,37 +248,6 @@ class TagService():
         for item in cursor:
             self._clean_mongo_ids(item)
             yield TaggingEvent.parse_obj(item)
-
-    def find_project(self, 
-                     user_id: str = None,
-                     sort: bool = False,
-                     offset=0,
-                     limit=10,) -> List[DataProject]:
-        """Find all DataProjects matching search filters
-
-        Parameters
-        ----------
-        search_filters: str
-            keyword arguments that are added to underlying query
-        
-        sort: bool
-            sort DataProjects according to last_accessed field
-
-        Returns
-        -------
-            DataProjects dict
-        """
-        query = {}
-        if user_id:
-            query['user_id'] = user_id
-        if sort:
-            cursor = self._collection_data_project.find(query).skip(offset).limit(limit).\
-                sort({"last_accessed" : -1})
-        else:
-            cursor = self._collection_data_project.find(query).skip(offset).limit(limit)
-        for item in cursor:
-            self._clean_mongo_ids(item)
-            yield DataProject.parse_obj(item)
 
     def retrieve_dataset(self, uid) -> Dataset:
         """Find a single dataset with the provided-uid

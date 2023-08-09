@@ -30,12 +30,6 @@ class TagSource(Persistable):
         extra = Extra.forbid
 
 
-class DataProject(Persistable):
-    user_id: str
-    created: datetime
-    last_accessed: datetime
-
-
 class TaggingEvent(Persistable):
     schema_version: str = SCHEMA_VERSION
     tagger_id: str

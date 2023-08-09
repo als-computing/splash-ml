@@ -11,7 +11,6 @@ from .graphql import schema, set_gql_tag_service
 
 from .model import (
     Dataset,
-    DataProject,
     SearchDatasetsRequest,
     Tag,
     TagSource,
@@ -159,32 +158,6 @@ def add_tag_source(asset: TagSource):
 def get_tag_sources():
     tag_sources = tag_svc.find_tag_sources()
     return tag_sources
-
-
-@app.post(API_URL_PREFIX + '/projects', tags=['events'], response_model=CreateResponseModel)
-def add_project(project: DataProject):
-    new_project = tag_svc.create_data_project(project)
-    return CreateResponseModel(uid=new_project.uid)
-
-
-@app.get(API_URL_PREFIX + '/projects', tags=['events'], response_model=List[DataProject])
-def get_projects(user_id: Optional[str] = None,
-                 sort: Optional[bool] = False,
-                 offset: Optional[int] = FastQuery(0, alias="page[offset]"),
-                 limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")):
-    """ Searches projects based on query parameters. Provides pagine through skip and limit
-    Args:
-        user_id (Optional[str] optional): find projects based on user id. Defaults to None.
-        sort (Optional[bool], optional): sort queried projects based on last access timestamp. 
-                                         Defaults to False.
-        skip (Optional[int], optional): [description]. Defaults to 0.
-        limit (Optional[int], optional): [description]. Defaults to 10.
-
-    Returns:
-        List[DataProject]: [Full object data project corresponding to search parameters]
-    """
-    projects = tag_svc.find_project(user_id, sort, offset, limit)
-    return projects
 
 
 @app.post(API_URL_PREFIX + '/events', tags=['events'], response_model=CreateResponseModel)

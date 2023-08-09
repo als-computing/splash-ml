@@ -21,17 +21,6 @@ def test_taggers(rest_client: TestClient):
 
 
 def test_tags_and_datasets(rest_client: TestClient):
-    # create a data project
-    response = rest_client.post(API_URL_PREFIX + "/projects", json=project)
-    assert response.status_code == 200
-    project_id = response.json()['uid']
-
-    # search data projects
-    response = rest_client.get(API_URL_PREFIX + "/projects")
-    assert response.status_code == 200
-    splash_project = response.json()[0]
-    assert project_id == splash_project['uid']
-
     # create a dataset
     response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
     assert response.status_code == 200
