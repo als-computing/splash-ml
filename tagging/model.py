@@ -30,6 +30,12 @@ class TagSource(Persistable):
         extra = Extra.forbid
 
 
+class DataProject(Persistable):
+    user_id: str
+    created: datetime
+    last_accessed: datetime
+
+
 class TaggingEvent(Persistable):
     schema_version: str = SCHEMA_VERSION
     tagger_id: str
@@ -64,9 +70,10 @@ class DatasetCollection(Persistable):
 class Dataset(BaseModel):
     uid: str = DEFAULT_UID
     schema_version: str = SCHEMA_VERSION
-    type: DatasetType
-    uri: str
-    tags: Optional[List[Tag]]
+    project: str = None
+    type: DatasetType = None
+    uri: str = None
+    tags: Optional[List[Tag]] = None
 
     class Config:
         extra = Extra.forbid
@@ -79,6 +86,8 @@ class FileDataset(Dataset):
 class SearchDatasetsRequest(BaseModel):
     uris: Optional[List[str]] = None
     tags: Optional[List[str]] = None
+    project: Optional[str] = None
+    event_id: Optional[str] = None
 
 
 class TagPatchRequest(BaseModel):
