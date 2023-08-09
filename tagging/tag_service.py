@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from .model import (
     Dataset,
+    DataProject,
     TagPatchRequest,
     TagSource,
     TaggingEvent
@@ -51,6 +52,7 @@ class TagService():
         self._db = client[db_name]
         self._collection_tag_sources = self._db.tag_source
         self._collection_tagging_event = self._db.tagging_event
+        self._collection_data_project = self._db.data_project
         self._collection_dataset = self._db.data_set
         self._create_indexes()
 
@@ -94,11 +96,25 @@ class TagService():
         self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
 
-    def retrieve_tagging_event(self, uid: str) -> TaggingEvent:
-        t_e_dict = self._collection_tagging_event.find_one({'uid': uid})
-        self._clean_mongo_ids(t_e_dict)
-        return TaggingEvent.parse_obj(t_e_dict)
+    def create_data_project(self, project: DataProject) -> DataProject:
+        """ Create a new data project.  The uid for this project will label
+        a data project that reference a collection of data sets.
 
+        Parameters
+        ----------
+        project : NewDataProject
+
+        Returns
+        ----------
+        DataProject
+            DataProject object, with uid in it
+        """
+        project_dict = project.dict()
+        self._inject_uid(project_dict)
+        self._collection_data_project.insert_one(project_dict)
+        self._clean_mongo_ids(project_dict)
+        return DataProject(**project_dict)
+    
     def create_dataset(self, dataset: Dataset) -> Dataset:
         """ Create a new dataset.  The uid for this dataset distinguishes
         it from others and can be used to find it later.
@@ -213,6 +229,77 @@ class TagService():
             self._clean_mongo_ids(tagger)
             yield TagSource.parse_obj(tagger)
 
+    def retrieve_tagging_event(self, uid: str) -> TaggingEvent:
+        """Find a single tagging event with the provided-uid
+
+        Parameters
+        ----------
+        uid : str
+            uid of the tagging event to return
+
+        Returns
+        -------
+        dict
+            tagging event dictionary corresponding to the uid
+        """
+        t_e_dict = self._collection_tagging_event.find_one({'uid': uid})
+        self._clean_mongo_ids(t_e_dict)
+        return TaggingEvent.parse_obj(t_e_dict)
+    
+    def find_tagging_event(self, 
+                           tagger_id: str = None,
+                           offset=0,
+                           limit=10,) -> List[TaggingEvent]:
+        """Find all TaggingEvents matching search filters
+
+        Parameters
+        ----------
+        search_filters: str
+            keyword arguments that are added to underlying query
+
+        Returns
+        -------
+            TaggingEvents dict
+        """
+        query = {}
+        if tagger_id:
+            query['tagger_id'] = tagger_id
+        cursor = self._collection_tagging_event.find(query).skip(offset).limit(limit)
+        for item in cursor:
+            self._clean_mongo_ids(item)
+            yield TaggingEvent.parse_obj(item)
+
+    def find_project(self, 
+                     user_id: str = None,
+                     sort: bool = False,
+                     offset=0,
+                     limit=10,) -> List[DataProject]:
+        """Find all DataProjects matching search filters
+
+        Parameters
+        ----------
+        search_filters: str
+            keyword arguments that are added to underlying query
+        
+        sort: bool
+            sort DataProjects according to last_accessed field
+
+        Returns
+        -------
+            DataProjects dict
+        """
+        query = {}
+        if user_id:
+            query['user_id'] = user_id
+        if sort:
+            cursor = self._collection_data_project.find(query).skip(offset).limit(limit).\
+                sort({"last_accessed" : -1})
+        else:
+            cursor = self._collection_data_project.find(query).skip(offset).limit(limit)
+        for item in cursor:
+            self._clean_mongo_ids(item)
+            yield DataProject.parse_obj(item)
+
     def retrieve_dataset(self, uid) -> Dataset:
         """Find a single dataset with the provided-uid
 
@@ -236,6 +323,8 @@ class TagService():
         self,
         uris: List[str] = None,
         tags: List[str] = None,
+        project: str = None,
+        event_id: str = None,
         offset=0,
         limit=10,
             ) -> Iterator[Dataset]:
@@ -244,7 +333,7 @@ class TagService():
 
         Parameters
         ----------
-        search_filters: str, str
+        search_filters: str, str, str, str
             keyword arguments that are added to underlying query
 
         Returns
@@ -261,12 +350,54 @@ class TagService():
             subqueries.append(
                 {"uri": {"$in": uris}}
             )
+        
+        if project:
+            subqueries.append(
+                {"project": project}
+            )
+
+        if event_id:
+            subqueries.append(
+                {"tags.event_id": event_id}
+            )
 
         if len(subqueries) > 0:
             query = {"$and": subqueries}
         cursor = self._collection_dataset.find(query).skip(offset).limit(limit)
         for item in cursor:
             self._clean_mongo_ids(item)
+            yield Dataset.parse_obj(item)
+    
+    def find_and_filter_datasets(self, tagging_event_uid: str) -> List[Dataset]:
+        """Find list of datasets with tags that match a given tagging event
+
+        Parameters
+        ----------
+        tagging_event_uid : str
+            uid of the tagging event of interest
+
+        Returns
+        -------
+        List[Dataset]
+            datasets with filtered list of tags that match the tagging event
+        """
+        cursor = self._collection_dataset.aggregate([
+            {"$match": {"tags.event_id": tagging_event_uid}},
+            {
+                "$addFields": {
+                    "filtered_tags" : {
+                        "$filter": {
+                            "input": "$tags", 
+                            "as": "tag", 
+                            "cond": {"$eq": ["$$tag.event_id", tagging_event_uid]}
+                        }
+                    }
+                }
+            },
+            { "$set" : { "tags": "$filtered_tags"}},
+            { "$project" : { "_id": 0 , "filtered_tags": 0}},
+        ])
+        for item in cursor:
             yield Dataset.parse_obj(item)
 
     def _create_indexes(self):
