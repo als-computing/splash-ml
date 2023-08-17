@@ -11,13 +11,9 @@ A data set stores information about a dataset like location, tags, and other met
 ``` json
 {
     "uid": "ee600210432b8f81ad229c33",
-    "type": "image",
-    "asset_locator": {
-        "uid": "sdlkjfsl3l23kj9s80jl",
-        "type": "file",
-        "locator": "/a/file.png"
-    },
-    "sample_id": "house paint 1234",
+    "type": "file",
+    "uri": "/a/file.png",
+    "project": "33c883336b4268e2a2b747cef70103494e1dc661",
     "tags": [
         {
             "name": "label",
