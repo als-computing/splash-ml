@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
 # https://www.mongodb.com/blog/post/building-with-patterns-the-schema-versioning-pattern
 SCHEMA_VERSION = "1.3"
