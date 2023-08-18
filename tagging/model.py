@@ -59,13 +59,9 @@ class Dataset(BaseModel, extra='forbid'):
     uid: str = DEFAULT_UID
     schema_version: str = SCHEMA_VERSION
     project: str = None
-    type: DatasetType
+    type: DatasetType = None
     uri: str = None
     tags: Optional[List[Tag]] = None
-
-
-class FileDataset(Dataset):
-    type = DatasetType.file
 
 
 class SearchDatasetsRequest(BaseModel):
