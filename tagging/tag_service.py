@@ -1,4 +1,5 @@
 import uuid
+from pydantic import parse_obj_as
 from typing import Iterator, List, Tuple
 from uuid import uuid4
 
@@ -94,28 +95,31 @@ class TagService():
         self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
     
-    def create_dataset(self, dataset: Dataset) -> Dataset:
-        """ Create a new dataset.  The uid for this dataset distinguishes
-        it from others and can be used to find it later.
+    def create_datasets(self, datasets: List[Dataset]) -> List[Dataset]:
+        """ Create a new datasets.  The uids for these datasets distinguish
+        them from others and can be used to find them later.
 
         Parameters
         ----------
-        dataset : NewDataset
+        datasets : List of NewDataset
 
         Returns
         ----------
-        Dataset
-            Dataset object, with uid in it
+        Datasets
+            List of Dataset object, with uids in them
         """
         # Assign new UIDs to dataset and tags
-        dataset.uid = str(uuid4())
-        if dataset.tags is not None:
-            for i in range(len(dataset.tags)):
-                dataset.tags[i].uid = str(uuid4())
-        dataset_dict = dataset.dict()
-        self._collection_dataset.insert_one(dataset_dict)
-        self._clean_mongo_ids(dataset_dict)
-        return dataset
+        datasets_dict = []
+        for dataset in datasets:
+            dataset.uid = str(uuid4())
+            if dataset.tags is not None:
+                for i in range(len(dataset.tags)):
+                    dataset.tags[i].uid = str(uuid4())
+            datasets_dict.append(dataset.dict())
+        self._collection_dataset.insert_many(datasets_dict)
+        for item in datasets_dict:
+            self._clean_mongo_ids(item)
+            yield Dataset.parse_obj(item)
 
     def modify_tags(self, req: TagPatchRequest, dataset_uid: str) -> Tuple[List[str], List[str]]:
         """ Add new set of tags or deletes a list of tags from an existing data set with the given uid.

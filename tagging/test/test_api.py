@@ -20,7 +20,7 @@ def test_taggers(rest_client: TestClient):
 
 def test_tags_and_datasets(rest_client: TestClient):
     # create a dataset
-    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
+    response = rest_client.post(API_URL_PREFIX + "/datasets", json=[dataset])
     assert response.status_code == 200
 
     # search on name
@@ -65,7 +65,7 @@ def test_tags_and_datasets(rest_client: TestClient):
     assert response.status_code == 200, f"oops {response.text}"
 
     # post new testing dataset
-    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset3)
+    response = rest_client.post(API_URL_PREFIX + "/datasets", json=[dataset3])
     assert response.status_code == 200
 
     # get datasets according to tagging event
@@ -78,10 +78,7 @@ def test_tags_and_datasets(rest_client: TestClient):
 
 
 def test_skip_limit(rest_client: TestClient):
-    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset)
-    assert response.status_code == 200
-
-    response = rest_client.post(API_URL_PREFIX + "/datasets", json=dataset2)
+    response = rest_client.post(API_URL_PREFIX + "/datasets", json=[dataset, dataset2])
     assert response.status_code == 200
 
     response: Dataset = rest_client.get(

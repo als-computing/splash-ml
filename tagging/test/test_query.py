@@ -9,7 +9,7 @@ from tagging.api import GRAPHQL_URL
 
 @pytest.fixture
 def load_datasets(tag_svc: TagService):
-    tag_svc.create_dataset(new_dataset)
+    next(tag_svc.create_datasets([new_dataset]))
 
 
 @pytest.mark.usefixtures("load_datasets")

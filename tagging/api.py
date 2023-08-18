@@ -78,10 +78,10 @@ class CreateTagPatchResponse(BaseModel):
     removed_tags_uid: Optional[List[str]]
 
 
-@app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
-def add_dataset(dataset: Dataset):
-    new_dataset = tag_svc.create_dataset(dataset)
-    return CreateResponseModel(uid=new_dataset.uid)
+@app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[CreateResponseModel])
+def add_datasets(datasets: List[Dataset]):
+    new_datasets = tag_svc.create_datasets(datasets)
+    return [CreateResponseModel(uid=new_dataset.uid) for new_dataset in new_datasets]
 
 
 @app.post(API_URL_PREFIX + '/datasets/search', tags=['datasets'], response_model=List[Dataset])
