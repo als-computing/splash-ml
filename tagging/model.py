@@ -20,24 +20,18 @@ class Locator(BaseModel):
     path: Any = Field(description="Locator information defined by the spec field")
 
 
-class TagSource(Persistable):
+class TagSource(Persistable, extra='forbid'):
     schema_version: str = SCHEMA_VERSION
     model_info: Optional[ModelInfo]
     type: str
     name: Optional[str] = Field(description="optional name of model that produces tags")
 
-    class Config:
-        extra = Extra.forbid
 
-
-class TaggingEvent(Persistable):
+class TaggingEvent(Persistable, extra='forbid'):
     schema_version: str = SCHEMA_VERSION
     tagger_id: str
     run_time: datetime
     accuracy: Optional[float] = Field(ge=0.0, le=1.0)
-
-    class Config:
-        extra = Extra.forbid
 
 
 class Tag(BaseModel):
@@ -54,6 +48,7 @@ class DatasetType(str, Enum):
     tiled = "tiled"
     file = "file"
     web = "web"
+    not_defined = None
 
 
 class DatasetCollection(Persistable):
@@ -61,16 +56,13 @@ class DatasetCollection(Persistable):
     models: Dict[str, int]  # model and the quality of that model when run against a model
 
 
-class Dataset(BaseModel):
+class Dataset(BaseModel, extra='forbid'):
     uid: str = DEFAULT_UID
     schema_version: str = SCHEMA_VERSION
     project: str = None
-    type: DatasetType = None
+    type: DatasetType = "not_defined"
     uri: str = None
     tags: Optional[List[Tag]] = None
-
-    class Config:
-        extra = Extra.forbid
 
 
 class FileDataset(Dataset):
