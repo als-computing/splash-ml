@@ -48,7 +48,6 @@ class DatasetType(str, Enum):
     tiled = "tiled"
     file = "file"
     web = "web"
-    not_defined = None
 
 
 class DatasetCollection(Persistable):
@@ -60,7 +59,7 @@ class Dataset(BaseModel, extra='forbid'):
     uid: str = DEFAULT_UID
     schema_version: str = SCHEMA_VERSION
     project: str = None
-    type: DatasetType = "not_defined"
+    type: DatasetType
     uri: str = None
     tags: Optional[List[Tag]] = None
 
