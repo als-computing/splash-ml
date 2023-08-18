@@ -102,7 +102,7 @@ def search_datasets(
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags, \
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags,
                                  project=search.project, event_id=search.event_id)
 
 
@@ -127,7 +127,7 @@ def get_datasets(
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags, project=project,\
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags, project=project,
                                  event_id=event_id)
 
 

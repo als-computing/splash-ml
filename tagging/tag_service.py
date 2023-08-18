@@ -1,5 +1,4 @@
 import uuid
-from pydantic import parse_obj_as
 from typing import Iterator, List, Tuple
 from uuid import uuid4
 
@@ -94,7 +93,7 @@ class TagService():
         self._collection_tagging_event.insert_one(event_dict)
         self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
-    
+
     def create_datasets(self, datasets: List[Dataset]) -> List[Dataset]:
         """ Create a new datasets.  The uids for these datasets distinguish
         them from others and can be used to find them later.
@@ -228,8 +227,8 @@ class TagService():
         t_e_dict = self._collection_tagging_event.find_one({'uid': uid})
         self._clean_mongo_ids(t_e_dict)
         return TaggingEvent.parse_obj(t_e_dict)
-    
-    def find_tagging_event(self, 
+
+    def find_tagging_event(self,
                            tagger_id: str = None,
                            offset=0,
                            limit=10,) -> List[TaggingEvent]:
@@ -302,7 +301,7 @@ class TagService():
             subqueries.append(
                 {"uri": {"$in": uris}}
             )
-        
+
         if project:
             subqueries.append(
                 {"project": project}
