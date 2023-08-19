@@ -70,12 +70,12 @@ app.add_route(GRAPHQL_URL, GraphQL(schema=schema, debug=True))
 
 
 class CreateResponseModel(BaseModel):
-    uid: str
+    uid: str = None
 
 
 class CreateTagPatchResponse(BaseModel):
-    added_tags_uid: Optional[List[str]]
-    removed_tags_uid: Optional[List[str]]
+    added_tags_uid: Optional[List[str]] = None
+    removed_tags_uid: Optional[List[str]] = None
 
 
 @app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[CreateResponseModel])

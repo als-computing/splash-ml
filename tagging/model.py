@@ -8,7 +8,7 @@ DEFAULT_UID = "342e4568-e23b-12d3-a456-526714178000"
 
 
 class Persistable(BaseModel):
-    uid: Optional[str]
+    uid: Optional[str] = None
 
 
 class ModelInfo(BaseModel):
@@ -22,26 +22,31 @@ class Locator(BaseModel):
 
 class TagSource(Persistable, extra='forbid'):
     schema_version: str = SCHEMA_VERSION
-    model_info: Optional[ModelInfo]
-    type: str
-    name: Optional[str] = Field(description="optional name of model that produces tags")
+    model_info: Optional[ModelInfo] = None
+    type: str = None
+    name: Optional[str] = Field(description="optional name of model that produces tags", 
+                                default=None)
 
 
 class TaggingEvent(Persistable, extra='forbid'):
     schema_version: str = SCHEMA_VERSION
     tagger_id: str
     run_time: datetime
-    accuracy: Optional[float] = Field(ge=0.0, le=1.0)
+    accuracy: Optional[float] = Field(ge=0.0, le=1.0, default=None)
 
 
 class Tag(BaseModel):
     uid: str = DEFAULT_UID
     name: str = Field(description="name of the tag")
     locator: Optional[Locator] = Field(description="optional location information, "
-                                                   "for indicating a subset of a dataset that this tag applies to")
+                                                   "for indicating a subset of a dataset that this "
+                                                   "tag applies to",
+                                       default=None)
 
-    confidence: Optional[float] = Field(description="confidence provided for this tag")
-    event_id: Optional[str] = Field(description="id of event where this tag was created")
+    confidence: Optional[float] = Field(description="confidence provided for this tag",
+                                        default=None)
+    event_id: Optional[str] = Field(description="id of event where this tag was created",
+                                    default=None)
 
 
 class DatasetType(str, Enum):
@@ -58,7 +63,7 @@ class DatasetCollection(Persistable):
 class Dataset(BaseModel, extra='forbid'):
     uid: str = DEFAULT_UID
     schema_version: str = SCHEMA_VERSION
-    project: str = None
+    project: Optional[str] = None
     type: DatasetType = None
     uri: str = None
     tags: Optional[List[Tag]] = None
@@ -72,5 +77,5 @@ class SearchDatasetsRequest(BaseModel):
 
 
 class TagPatchRequest(BaseModel):
-    add_tags: Optional[List[Tag]]
-    remove_tags: Optional[List[str]]
+    add_tags: Optional[List[Tag]] = None
+    remove_tags: Optional[List[str]] = None

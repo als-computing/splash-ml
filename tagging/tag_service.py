@@ -136,7 +136,7 @@ class TagService():
 
         removed_tags_uid : List[str]
             List of removed tags UIDs
-            If tag UID did not exit in the given dataset, it returns -1
+            If tag UID did not exit in the given dataset, it returns "-1"
         """
         tags2add = req.add_tags
         tags2remove = req.remove_tags
@@ -167,7 +167,7 @@ class TagService():
             )
 
         if tags2remove:
-            # if the there are no tags to delete in the dataset, returns list of -1
+            # if the there are no tags to delete in the dataset, returns list of "-1"
             if dataset['tags'] is None or dataset['tags'] == []:
                 removed_tags_uid = ['-1'] * len(tags2remove)
             else:
@@ -184,7 +184,7 @@ class TagService():
                     current_tags_uids = [current_tag['uid'] for current_tag in dataset['tags']]
                     for i, tag_uid in enumerate(removed_tags_uid):
                         if tag_uid not in current_tags_uids:
-                            removed_tags_uid[i] = -1
+                            removed_tags_uid[i] = '-1'
 
         return added_tags_uid, removed_tags_uid
 
