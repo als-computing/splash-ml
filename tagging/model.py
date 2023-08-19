@@ -24,7 +24,7 @@ class TagSource(Persistable, extra='forbid'):
     schema_version: str = SCHEMA_VERSION
     model_info: Optional[ModelInfo] = None
     type: str = None
-    name: Optional[str] = Field(description="optional name of model that produces tags", 
+    name: Optional[str] = Field(description="optional name of model that produces tags",
                                 default=None)
 
 
