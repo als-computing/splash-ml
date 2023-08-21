@@ -94,33 +94,31 @@ class TagService():
         self._clean_mongo_ids(event_dict)
         return TaggingEvent(**event_dict)
 
-    def retrieve_tagging_event(self, uid: str) -> TaggingEvent:
-        t_e_dict = self._collection_tagging_event.find_one({'uid': uid})
-        self._clean_mongo_ids(t_e_dict)
-        return TaggingEvent.parse_obj(t_e_dict)
-
-    def create_dataset(self, dataset: Dataset) -> Dataset:
-        """ Create a new dataset.  The uid for this dataset distinguishes
-        it from others and can be used to find it later.
+    def create_datasets(self, datasets: List[Dataset]) -> List[Dataset]:
+        """ Create a new datasets.  The uids for these datasets distinguish
+        them from others and can be used to find them later.
 
         Parameters
         ----------
-        dataset : NewDataset
+        datasets : List of NewDataset
 
         Returns
         ----------
-        Dataset
-            Dataset object, with uid in it
+        Datasets
+            List of Dataset object, with uids in them
         """
         # Assign new UIDs to dataset and tags
-        dataset.uid = str(uuid4())
-        if dataset.tags is not None:
-            for i in range(len(dataset.tags)):
-                dataset.tags[i].uid = str(uuid4())
-        dataset_dict = dataset.dict()
-        self._collection_dataset.insert_one(dataset_dict)
-        self._clean_mongo_ids(dataset_dict)
-        return dataset
+        datasets_dict = []
+        for dataset in datasets:
+            dataset.uid = str(uuid4())
+            if dataset.tags is not None:
+                for i in range(len(dataset.tags)):
+                    dataset.tags[i].uid = str(uuid4())
+            datasets_dict.append(dataset.dict())
+        self._collection_dataset.insert_many(datasets_dict)
+        for item in datasets_dict:
+            self._clean_mongo_ids(item)
+            yield Dataset.parse_obj(item)
 
     def modify_tags(self, req: TagPatchRequest, dataset_uid: str) -> Tuple[List[str], List[str]]:
         """ Add new set of tags or deletes a list of tags from an existing data set with the given uid.
@@ -138,7 +136,7 @@ class TagService():
 
         removed_tags_uid : List[str]
             List of removed tags UIDs
-            If tag UID did not exit in the given dataset, it returns -1
+            If tag UID did not exit in the given dataset, it returns "-1"
         """
         tags2add = req.add_tags
         tags2remove = req.remove_tags
@@ -169,7 +167,7 @@ class TagService():
             )
 
         if tags2remove:
-            # if the there are no tags to delete in the dataset, returns list of -1
+            # if the there are no tags to delete in the dataset, returns list of "-1"
             if dataset['tags'] is None or dataset['tags'] == []:
                 removed_tags_uid = ['-1'] * len(tags2remove)
             else:
@@ -186,7 +184,7 @@ class TagService():
                     current_tags_uids = [current_tag['uid'] for current_tag in dataset['tags']]
                     for i, tag_uid in enumerate(removed_tags_uid):
                         if tag_uid not in current_tags_uids:
-                            removed_tags_uid[i] = -1
+                            removed_tags_uid[i] = '-1'
 
         return added_tags_uid, removed_tags_uid
 
@@ -213,6 +211,46 @@ class TagService():
             self._clean_mongo_ids(tagger)
             yield TagSource.parse_obj(tagger)
 
+    def retrieve_tagging_event(self, uid: str) -> TaggingEvent:
+        """Find a single tagging event with the provided-uid
+
+        Parameters
+        ----------
+        uid : str
+            uid of the tagging event to return
+
+        Returns
+        -------
+        dict
+            tagging event dictionary corresponding to the uid
+        """
+        t_e_dict = self._collection_tagging_event.find_one({'uid': uid})
+        self._clean_mongo_ids(t_e_dict)
+        return TaggingEvent.parse_obj(t_e_dict)
+
+    def find_tagging_event(self,
+                           tagger_id: str = None,
+                           offset=0,
+                           limit=10,) -> List[TaggingEvent]:
+        """Find all TaggingEvents matching search filters
+
+        Parameters
+        ----------
+        search_filters: str
+            keyword arguments that are added to underlying query
+
+        Returns
+        -------
+            TaggingEvents dict
+        """
+        query = {}
+        if tagger_id:
+            query['tagger_id'] = tagger_id
+        cursor = self._collection_tagging_event.find(query).skip(offset).limit(limit)
+        for item in cursor:
+            self._clean_mongo_ids(item)
+            yield TaggingEvent.parse_obj(item)
+
     def retrieve_dataset(self, uid) -> Dataset:
         """Find a single dataset with the provided-uid
 
@@ -236,6 +274,8 @@ class TagService():
         self,
         uris: List[str] = None,
         tags: List[str] = None,
+        project: str = None,
+        event_id: str = None,
         offset=0,
         limit=10,
             ) -> Iterator[Dataset]:
@@ -244,7 +284,7 @@ class TagService():
 
         Parameters
         ----------
-        search_filters: str, str
+        search_filters: str, str, str, str
             keyword arguments that are added to underlying query
 
         Returns
@@ -260,6 +300,16 @@ class TagService():
         if uris:
             subqueries.append(
                 {"uri": {"$in": uris}}
+            )
+
+        if project:
+            subqueries.append(
+                {"project": project}
+            )
+
+        if event_id:
+            subqueries.append(
+                {"tags.event_id": event_id}
             )
 
         if len(subqueries) > 0:

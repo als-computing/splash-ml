@@ -27,7 +27,7 @@ def test_unique_uid_tag_set(tag_svc: TagService):
     tagger = tag_svc.create_tag_source(new_tagger)
     new_tagging_event.tagger_id = tagger.uid
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
-    asset = tag_svc.create_dataset(new_dataset)
+    asset = next(tag_svc.create_datasets([new_dataset]))
     with pytest.raises(DuplicateKeyError):
         another_tagger = TagSource(**
                                    {"uid": tagger.uid,
@@ -48,7 +48,7 @@ def test_unique_uid_tag_set(tag_svc: TagService):
             "uid": asset.uid,
             "type": "file",
             "uri": "bar"})
-        updated_dataset = tag_svc.create_dataset(another_dataset)
+        updated_dataset = next(tag_svc.create_datasets([another_dataset]))
         # create dataset will not raise the error by itself because it overwrites the UID
         # To force duplicate:
         tag_svc._collection_dataset.update_one({'uid': updated_dataset.uid},
@@ -60,7 +60,7 @@ def test_create_and_find_tagger(tag_svc: TagService):
     tagger = tag_svc.create_tag_source(new_tagger)
     assert tagger is not None
     return_taggers = tag_svc.find_tag_sources(name="PyTestNet")
-    assert list(return_taggers)[0].name == "PyTestNet"
+    assert next(return_taggers).name == "PyTestNet"
 
 
 def test_create_and_find_tagging_event(tag_svc: TagService):
@@ -77,7 +77,7 @@ def test_create_and_find_tagging_event(tag_svc: TagService):
 def test_create_and_find_asset(tag_svc: TagService):
     tagger = tag_svc.create_tag_source(new_tagger)
     new_tagging_event.tagger_id = tagger.uid
-    asset = tag_svc.create_dataset(new_dataset)
+    asset = next(tag_svc.create_datasets([new_dataset]))
     return_asset = tag_svc.retrieve_dataset(asset.uid)
 
     assert return_asset.schema_version == SCHEMA_VERSION
@@ -97,7 +97,7 @@ def test_create_and_find_asset(tag_svc: TagService):
 
 
 def test_add_dataset_tags(tag_svc: TagService):
-    dataset = tag_svc.create_dataset(new_dataset)
+    dataset = next(tag_svc.create_datasets([new_dataset]))
     tagging_event = tag_svc.create_tagging_event(new_tagging_event)
     new_tag = Tag(**{
             "name": "add1",
@@ -117,7 +117,7 @@ def test_add_dataset_tags(tag_svc: TagService):
 
 
 def test_add_none_tags(tag_svc: TagService):
-    dataset = tag_svc.create_dataset(no_tag_dataset)
+    dataset = next(tag_svc.create_datasets([no_tag_dataset]))
     req = TagPatchRequest(add_tags=[no_tag], remove_tags=[])
     added_tags_uids = tag_svc.modify_tags(req, dataset.uid)
     updated_dataset = tag_svc._collection_dataset.find_one({'tags.uid': added_tags_uids[0][0]})
@@ -128,7 +128,7 @@ def test_add_none_tags(tag_svc: TagService):
 
 def test_remove_dataset_tags(tag_svc: TagService):
     # this test creates a new dataset with 3 tags, and deletes the first 2
-    dataset = tag_svc.create_dataset(new_dataset)
+    dataset = next(tag_svc.create_datasets([new_dataset]))
     remove_tags_uids = [dataset.tags[0].uid, dataset.tags[1].uid]
     req = TagPatchRequest(add_tags=[], remove_tags=remove_tags_uids)
     output = tag_svc.modify_tags(req, dataset.uid)
@@ -138,7 +138,7 @@ def test_remove_dataset_tags(tag_svc: TagService):
 
 def test_remove_nonexistent_tag(tag_svc: TagService):
     # this test creates a dataset with no tags and deletes a nonexistent tag
-    dataset = tag_svc.create_dataset(no_tag_dataset)
+    dataset = next(tag_svc.create_datasets([no_tag_dataset]))
     remove_tags_uids = ["123"]
     req = TagPatchRequest(add_tags=[], remove_tags=remove_tags_uids)
     deleted_tags_uids = tag_svc.modify_tags(req, dataset.uid)

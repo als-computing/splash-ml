@@ -70,18 +70,18 @@ app.add_route(GRAPHQL_URL, GraphQL(schema=schema, debug=True))
 
 
 class CreateResponseModel(BaseModel):
-    uid: str
+    uid: str = None
 
 
 class CreateTagPatchResponse(BaseModel):
-    added_tags_uid: Optional[List[str]]
-    removed_tags_uid: Optional[List[str]]
+    added_tags_uid: Optional[List[str]] = None
+    removed_tags_uid: Optional[List[str]] = None
 
 
-@app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=CreateResponseModel)
-def add_dataset(dataset: Dataset):
-    new_dataset = tag_svc.create_dataset(dataset)
-    return CreateResponseModel(uid=new_dataset.uid)
+@app.post(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[CreateResponseModel])
+def add_datasets(datasets: List[Dataset]):
+    new_datasets = tag_svc.create_datasets(datasets)
+    return [CreateResponseModel(uid=new_dataset.uid) for new_dataset in new_datasets]
 
 
 @app.post(API_URL_PREFIX + '/datasets/search', tags=['datasets'], response_model=List[Dataset])
@@ -89,40 +89,46 @@ def search_datasets(
     search: SearchDatasetsRequest,
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
-
 ) -> List[Dataset]:
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
     Args:
         uri (Optional[str], optional): find dataset based on uri. Defaults to None.
         tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
+        project (Optional[str], optional): find dataset based on project id
+        event_id (Optional[str], optional): find dataset based on event id
         skip (Optional[int], optional): [description]. Defaults to 0.
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags)
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=search.uris, tags=search.tags,
+                                 project=search.project, event_id=search.event_id)
 
 
 @app.get(API_URL_PREFIX + '/datasets', tags=['datasets'], response_model=List[Dataset])
 def get_datasets(
     uris: Optional[List[str]] = FastQuery(None),
     tags: Optional[List[str]] = FastQuery(None),
+    project: Optional[str] = FastQuery(None),
+    event_id: Optional[str] = FastQuery(None),
     offset: Optional[int] = FastQuery(0, alias="page[offset]"),
     limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")
-
 ) -> List[Dataset]:
     """ Searches datasets based on query parameters. Provides pagine through skip and limit
     Args:
-        uri (Optional[str], optional): find dataset based on uri. Defaults to None.
+        uris (Optional[List[str],] optional): find dataset based on uris. Defaults to None.
         tags(Optional[List[str]], optional): list of tags to search for. Defaults to none.
+        project (Optional[str], optional): find dataset based on project id
+        event_id (Optional[str], optional): find dataset based on event id
         skip (Optional[int], optional): [description]. Defaults to 0.
         limit (Optional[int], optional): [description]. Defaults to 10.
 
     Returns:
         List[Dataset]: [Full object datasets corresponding to search parameters]
     """
-    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags)
+    return tag_svc.find_datasets(offset=offset, limit=limit, uris=uris, tags=tags, project=project,
+                                 event_id=event_id)
 
 
 @app.patch(API_URL_PREFIX + '/datasets/{uid}/tags',
@@ -156,8 +162,31 @@ def get_tag_sources():
 
 @app.post(API_URL_PREFIX + '/events', tags=['events'], response_model=CreateResponseModel)
 def add_event(event: TaggingEvent):
-    new_event = tag_svc.create_event(event)
-    return CreateResponseModel(new_event.uid)
+    new_event = tag_svc.create_tagging_event(event)
+    return CreateResponseModel(uid=new_event.uid)
+
+
+@app.get(API_URL_PREFIX + '/events/{uid}', tags=['events'], response_model=TaggingEvent)
+def get_event(uid):
+    event = tag_svc.retrieve_tagging_event(uid)
+    return event
+
+
+@app.get(API_URL_PREFIX + '/events', tags=['events'], response_model=List[TaggingEvent])
+def get_events(tagger_id: Optional[str] = None,
+               offset: Optional[int] = FastQuery(0, alias="page[offset]"),
+               limit: Optional[int] = FastQuery(DEFAULT_PAGE_SIZE, alias="page[limit]")):
+    """ Searches tagging events based on query parameters. Provides pagine through skip and limit
+    Args:
+        tagger_id (Optional[str] optional): find tagging events based on tagger id. Defaults to None.
+        skip (Optional[int], optional): [description]. Defaults to 0.
+        limit (Optional[int], optional): [description]. Defaults to 10.
+
+    Returns:
+        List[TaggingEvent]: [Full object tagging event corresponding to search parameters]
+    """
+    events = tag_svc.find_tagging_event(tagger_id, offset, limit)
+    return events
 
 
 if __name__ == '__main__':
